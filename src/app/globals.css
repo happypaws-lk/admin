@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: #5b50e6;
+  --color-accent-hover: #4d42df;
+  --color-accent-muted: rgba(91, 80, 230, 0.15);
+  --color-dark-bg: #0d0f17;
+  --color-card-bg: rgba(19, 22, 39, 0.65);
+}
+
+:root {
+  --background: #0d0f17;
+  --foreground: #f8fafc;
+  --accent: #5b50e6;
+  --accent-hover: #4d42df;
+  color-scheme: dark;
+}
+
+*, ::after, ::before {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: #0d0f17;
+  color: #f8fafc;
+  color-scheme: dark;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
