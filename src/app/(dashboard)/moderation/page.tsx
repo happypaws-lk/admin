@@ -11,6 +11,13 @@ import type {
 import { DataTable, type Column } from "@/components/DataTable";
 import { Pagination } from "@/components/Pagination";
 import { StatusBadge } from "@/components/StatusBadge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PAGE_SIZE = 20;
 
@@ -34,7 +41,7 @@ export default function ModerationPage() {
     try {
       const result = await apiClient.get<PagedResult<ModerationLogResponse>>(
         "/api/v1/admin/moderation",
-        { page, pageSize: PAGE_SIZE },
+        { Page: page, PageSize: PAGE_SIZE },
       );
       setData(result);
     } catch (e) {
@@ -99,10 +106,10 @@ export default function ModerationPage() {
       ),
     },
     {
-      key: "performedByEmail",
-      header: "By",
+      key: "adminId",
+      header: "Admin ID",
       render: (row) => (
-        <span className="text-slate-400 text-xs">{row.performedByEmail}</span>
+        <span className="text-slate-400 text-xs font-mono">{row.adminId?.slice(0, 8)}…</span>
       ),
     },
     {
@@ -139,29 +146,35 @@ export default function ModerationPage() {
         )}
 
         <form onSubmit={handleCreate} className="grid grid-cols-2 gap-3">
-          <select
-            value={targetType}
-            onChange={(e) => setTargetType(e.target.value as ModerationTargetType | "")}
-            required
-            className="px-3 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all col-span-1"
+          <Select
+            value={targetType === "" ? "EMPTY" : String(targetType)}
+            onValueChange={(val) => setTargetType(val === "EMPTY" ? "" : (Number(val) as ModerationTargetType))}
           >
-            <option value="">Target type…</option>
-            <option value="0">Listing</option>
-            <option value="1">Message</option>
-            <option value="2">User</option>
-          </select>
+            <SelectTrigger className="col-span-1">
+              <SelectValue placeholder="Target type…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="EMPTY">Target type…</SelectItem>
+              <SelectItem value="0">Listing</SelectItem>
+              <SelectItem value="1">Message</SelectItem>
+              <SelectItem value="2">User</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <select
-            value={actionType}
-            onChange={(e) => setActionType(e.target.value as ModerationActionType | "")}
-            required
-            className="px-3 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all col-span-1"
+          <Select
+            value={actionType === "" ? "EMPTY" : String(actionType)}
+            onValueChange={(val) => setActionType(val === "EMPTY" ? "" : (Number(val) as ModerationActionType))}
           >
-            <option value="">Action type…</option>
-            <option value="0">Remove</option>
-            <option value="1">Suspend</option>
-            <option value="2">Warn</option>
-          </select>
+            <SelectTrigger className="col-span-1">
+              <SelectValue placeholder="Action type…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="EMPTY">Action type…</SelectItem>
+              <SelectItem value="0">Remove</SelectItem>
+              <SelectItem value="1">Suspend</SelectItem>
+              <SelectItem value="2">Warn</SelectItem>
+            </SelectContent>
+          </Select>
 
           <input
             type="text"

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -45,28 +45,45 @@ export default function ResetPasswordForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
   const resetToken = searchParams.get("token") ?? "";
 
+  useEffect(() => {
+    if (!email || !resetToken) {
+      router.replace("/forgot-password");
+    }
+  }, [email, resetToken, router]);
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+  });
 
   const onSubmit = async (values: FormValues) => {
     setApiError(null);
     try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, resetToken, newPassword: values.newPassword }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, resetToken, newPassword: values.newPassword }),
+        },
+      );
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setApiError((data as { message?: string }).message ?? "Reset failed. The link may have expired.");
+        setApiError(
+          (data as { message?: string; title?: string }).message ??
+            (data as { message?: string; title?: string }).title ??
+            "Reset failed. The link may have expired.",
+        );
         return;
       }
 
@@ -81,7 +98,12 @@ export default function ResetPasswordForm() {
       <div className="absolute -top-24 -left-24 w-[450px] sm:w-[550px] h-[450px] sm:h-[550px] bg-[#685cf0]/20 rounded-full blur-[120px] pointer-events-none" aria-hidden="true" />
       <div className="absolute -bottom-28 -right-28 w-[500px] sm:w-[650px] h-[500px] sm:h-[650px] bg-[#4a29a0]/30 rounded-full blur-[140px] pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-10 w-full max-w-[430px] p-7 sm:p-9 rounded-2xl bg-[#131627]/65 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/80">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        className="relative z-10 w-full max-w-[430px] p-7 sm:p-9 rounded-2xl bg-[#131627]/65 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/80"
+      >
         {isSuccess ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -93,7 +115,7 @@ export default function ResetPasswordForm() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              className="w-16 h-16 rounded-full bg-[#5b50e6]/20 border border-[#5b50e6]/40 flex items-center justify-center text-[#5b50e6] mx-auto mb-5 shadow-lg shadow-[#5b50e6]/10"
+              className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mx-auto mb-5 shadow-lg shadow-emerald-500/10"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -120,7 +142,7 @@ export default function ResetPasswordForm() {
               transition={{ duration: 0.4, delay: 0.5 }}
               className="text-2xl sm:text-[28px] font-bold text-white text-center mb-2 tracking-tight"
             >
-              Successful
+              Password changed
             </motion.h1>
 
             <motion.p
@@ -129,7 +151,7 @@ export default function ResetPasswordForm() {
               transition={{ duration: 0.4, delay: 0.65 }}
               className="text-sm text-slate-400 font-normal mb-6 leading-relaxed"
             >
-              Congratulations! Your password has been changed. Continue to login.
+              Congratulations! Your password has been successfully updated.
             </motion.p>
 
             <motion.div
@@ -163,13 +185,13 @@ export default function ResetPasswordForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div>
                 <label htmlFor="newPassword" className="block text-sm font-medium text-slate-300 mb-2">
-                  Password
+                  New password
                 </label>
                 <div className="relative">
                   <input
                     id="newPassword"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Your Password"
+                    placeholder="Your new password"
                     className="w-full pl-4 pr-11 py-3 bg-[#181b2b]/90 border border-[#2c3049] rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-[#5b50e6] focus:ring-1 focus:ring-[#5b50e6] transition-all text-sm"
                     autoComplete="new-password"
                     {...register("newPassword")}
@@ -217,8 +239,8 @@ export default function ResetPasswordForm() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 px-4 bg-[#5b50e6] hover:bg-[#4d42df] active:bg-[#4237d1] text-white font-semibold rounded-lg shadow-lg shadow-[#5b50e6]/25 transition-all duration-200 text-sm tracking-wide flex items-center justify-center mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={isSubmitting || !isValid}
+                className="w-full py-3.5 px-4 bg-[#5b50e6] hover:bg-[#4d42df] active:bg-[#4237d1] text-white font-semibold rounded-lg shadow-lg shadow-[#5b50e6]/25 transition-all duration-200 text-sm tracking-wide flex items-center justify-center mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -229,7 +251,7 @@ export default function ResetPasswordForm() {
             </form>
           </>
         )}
-      </div>
+      </motion.div>
     </main>
   );
 }

@@ -4,10 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { apiClient } from "@/lib/api";
-import type { AdminCaseResponse, PagedResult } from "@/lib/types";
+import type { AdminCaseResponse, RescueCaseSummaryResponse, PagedResult } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
 import { Pagination } from "@/components/Pagination";
 import { StatusBadge } from "@/components/StatusBadge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const RescueMap = dynamic(
   () => import("./_components/RescueMap"),
@@ -15,10 +22,9 @@ const RescueMap = dynamic(
 );
 
 const PAGE_SIZE = 20;
-const MAP_LIMIT = 500;
 
 export default function RescueCasesPage() {
-  const [data, setData] = useState<PagedResult<AdminCaseResponse> | null>(null);
+  const [data, setData] = useState<PagedResult<RescueCaseSummaryResponse> | null>(null);
   const [mapCases, setMapCases] = useState<AdminCaseResponse[]>([]);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
@@ -31,22 +37,19 @@ export default function RescueCasesPage() {
     setError(null);
     try {
       const [listResult, mapResult] = await Promise.all([
-        apiClient.get<PagedResult<AdminCaseResponse>>(
-          "/api/v1/admin/rescue-cases",
+        apiClient.get<PagedResult<RescueCaseSummaryResponse>>(
+          "/api/v1/rescues",
           {
-            page,
-            pageSize: PAGE_SIZE,
+            Page: page,
+            PageSize: PAGE_SIZE,
             ...(statusFilter ? { status: statusFilter } : {}),
             ...(urgencyFilter ? { urgency: urgencyFilter } : {}),
           },
         ),
-        apiClient.get<PagedResult<AdminCaseResponse>>("/api/v1/admin/rescue-cases", {
-          page: 1,
-          pageSize: MAP_LIMIT,
-        }),
+        apiClient.get<AdminCaseResponse[]>("/api/v1/admin/cases"),
       ]);
       setData(listResult);
-      setMapCases(mapResult.items ?? []);
+      setMapCases(mapResult ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load rescue cases.");
     } finally {
@@ -58,23 +61,18 @@ export default function RescueCasesPage() {
     fetchCases();
   }, [fetchCases]);
 
-  const columns: Column<AdminCaseResponse>[] = [
+  const columns: Column<RescueCaseSummaryResponse>[] = [
     {
-      key: "title",
-      header: "Title",
+      key: "locationName",
+      header: "Location",
       render: (row) => (
         <Link
           href={`/rescue-cases/${row.id}`}
           className="text-[#818cf8] hover:text-indigo-300 font-medium transition-colors"
         >
-          {row.title}
+          {row.locationName}
         </Link>
       ),
-    },
-    {
-      key: "location",
-      header: "Location",
-      render: (row) => <span className="text-slate-400 text-xs">{row.location}</span>,
     },
     {
       key: "urgency",
@@ -125,26 +123,41 @@ export default function RescueCasesPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 rounded-xl bg-[#0d0f17] border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all"
+        <Select
+          value={statusFilter || "ALL"}
+          onValueChange={(val) => {
+            setStatusFilter(val === "ALL" ? "" : val);
+            setPage(1);
+          }}
         >
-          <option value="">All statuses</option>
-          <option value="Open">Open</option>
-          <option value="InProgress">In Progress</option>
-          <option value="Resolved">Resolved</option>
-        </select>
-        <select
-          value={urgencyFilter}
-          onChange={(e) => { setUrgencyFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 rounded-xl bg-[#0d0f17] border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all"
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All statuses</SelectItem>
+            <SelectItem value="0">Open</SelectItem>
+            <SelectItem value="1">In Progress</SelectItem>
+            <SelectItem value="2">Resolved</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={urgencyFilter || "ALL"}
+          onValueChange={(val) => {
+            setUrgencyFilter(val === "ALL" ? "" : val);
+            setPage(1);
+          }}
         >
-          <option value="">All urgency</option>
-          <option value="Low">Low</option>
-          <option value="Moderate">Moderate</option>
-          <option value="Critical">Critical</option>
-        </select>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All urgency" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All urgency</SelectItem>
+            <SelectItem value="0">Low</SelectItem>
+            <SelectItem value="1">Moderate</SelectItem>
+            <SelectItem value="2">Critical</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {error && (

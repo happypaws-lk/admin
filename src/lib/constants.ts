@@ -1,5 +1,6 @@
 export const ACCESS_TOKEN_COOKIE = "hp_access_token";
 export const REFRESH_TOKEN_COOKIE = "hp_refresh_token";
+export const REMEMBER_ME_COOKIE = "hp_remember";
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 export const COOKIE_SECURE = process.env.AUTH_COOKIE_SECURE === "true";

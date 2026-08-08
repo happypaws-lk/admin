@@ -3,6 +3,7 @@ import {
   API_BASE_URL,
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
+  REMEMBER_ME_COOKIE,
   COOKIE_SECURE,
   COOKIE_DOMAIN,
 } from "@/lib/constants";
@@ -74,8 +75,18 @@ export async function POST(req: NextRequest) {
   res.cookies.set(
     REFRESH_TOKEN_COOKIE,
     auth.refreshToken,
-    cookieOptions("/api/auth", rememberMe) as Parameters<typeof res.cookies.set>[2]
+    cookieOptions("/", rememberMe) as Parameters<typeof res.cookies.set>[2]
   );
+
+  if (rememberMe) {
+    res.cookies.set(REMEMBER_ME_COOKIE, "1", {
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+      secure: COOKIE_SECURE,
+      sameSite: "strict",
+      ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+    } as Parameters<typeof res.cookies.set>[2]);
+  }
 
   return res;
 }

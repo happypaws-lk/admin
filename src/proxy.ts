@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
+  REMEMBER_ME_COOKIE,
   COOKIE_SECURE,
   COOKIE_DOMAIN,
 } from "@/lib/constants";
@@ -9,7 +10,6 @@ import {
   decodeUserClaims,
   isAdmin,
   isExpired,
-  isExpiringSoon,
 } from "@/lib/auth";
 import type { AuthResponse } from "@/lib/types";
 
@@ -20,13 +20,14 @@ const AUTH_ROUTES = [
   "/reset-password",
 ];
 
-function refreshCookieOptions(path: string) {
+function refreshCookieOptions(path: string, rememberMe: boolean) {
   return {
     httpOnly: true,
     secure: COOKIE_SECURE,
     sameSite: "strict" as const,
     path,
     ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+    ...(rememberMe ? { maxAge: 7 * 24 * 60 * 60 } : {}),
   };
 }
 
@@ -58,6 +59,7 @@ export async function proxy(req: NextRequest) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
+    const rememberMe = req.cookies.get(REMEMBER_ME_COOKIE)?.value === "1";
     const apiBase =
       process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
@@ -76,28 +78,23 @@ export async function proxy(req: NextRequest) {
     next.cookies.set(
       ACCESS_TOKEN_COOKIE,
       auth.accessToken,
-      refreshCookieOptions("/")
+      refreshCookieOptions("/", rememberMe)
     );
     next.cookies.set(
       REFRESH_TOKEN_COOKIE,
       auth.refreshToken,
-      refreshCookieOptions("/api/auth")
+      refreshCookieOptions("/", rememberMe)
     );
-    return next;
-  }
-
-  // Proactive refresh when the token is expiring soon (fire-and-forget).
-  if (isExpiringSoon(claims)) {
-    const refreshToken = req.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
-    if (refreshToken) {
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
-      fetch(`${apiBase}/api/v1/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      }).catch(() => undefined);
+    if (rememberMe) {
+      next.cookies.set(REMEMBER_ME_COOKIE, "1", {
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60,
+        secure: COOKIE_SECURE,
+        sameSite: "strict" as const,
+        ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+      });
     }
+    return next;
   }
 
   return NextResponse.next();

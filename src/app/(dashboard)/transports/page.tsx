@@ -3,16 +3,19 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { apiClient } from "@/lib/api";
-import type { TransportTaskResponse, PagedResult } from "@/lib/types";
+import type { TransportTaskResponse } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
-import { Pagination } from "@/components/Pagination";
 import { StatusBadge } from "@/components/StatusBadge";
-
-const PAGE_SIZE = 20;
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function TransportsPage() {
-  const [data, setData] = useState<PagedResult<TransportTaskResponse> | null>(null);
-  const [page, setPage] = useState(1);
+  const [data, setData] = useState<TransportTaskResponse[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,36 +24,34 @@ export default function TransportsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await apiClient.get<PagedResult<TransportTaskResponse>>(
-        "/api/v1/admin/transports",
-        {
-          page,
-          pageSize: PAGE_SIZE,
-          ...(statusFilter !== "" ? { status: statusFilter } : {}),
-        },
-      );
-      setData(result);
+      const result = await apiClient.get<TransportTaskResponse[]>("/api/v1/transports");
+      setData(result ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load transports.");
     } finally {
       setIsLoading(false);
     }
-  }, [page, statusFilter]);
+  }, []);
 
   useEffect(() => {
     fetchTransports();
   }, [fetchTransports]);
 
+  const filtered =
+    statusFilter !== ""
+      ? data.filter((t) => String(t.status) === statusFilter)
+      : data;
+
   const columns: Column<TransportTaskResponse>[] = [
     {
-      key: "caseTitle",
+      key: "caseId",
       header: "Rescue Case",
       render: (row) => (
         <Link
-          href={`/rescue-cases/${row.rescueCaseId}`}
-          className="text-[#818cf8] hover:text-indigo-300 font-medium transition-colors"
+          href={`/rescue-cases/${row.caseId}`}
+          className="text-[#818cf8] hover:text-indigo-300 font-medium transition-colors font-mono text-xs"
         >
-          {row.caseTitle}
+          {row.caseId.slice(0, 8)}…
         </Link>
       ),
     },
@@ -71,11 +72,11 @@ export default function TransportsPage() {
       width: "120px",
     },
     {
-      key: "assignedToEmail",
-      header: "Assigned to",
+      key: "transporterName",
+      header: "Transporter",
       render: (row) => (
         <span className="text-slate-400 text-xs">
-          {row.assignedToEmail ?? "—"}
+          {row.transporterName || (row.transporterId ? "—" : "Unassigned")}
         </span>
       ),
     },
@@ -99,18 +100,22 @@ export default function TransportsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 rounded-xl bg-[#0d0f17] border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all"
+        <Select
+          value={statusFilter || "ALL"}
+          onValueChange={(val) => setStatusFilter(val === "ALL" ? "" : val)}
         >
-          <option value="">All statuses</option>
-          <option value="0">Pending</option>
-          <option value="1">Assigned</option>
-          <option value="2">Picked Up</option>
-          <option value="3">In Transit</option>
-          <option value="4">Delivered</option>
-        </select>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All statuses</SelectItem>
+            <SelectItem value="0">Pending</SelectItem>
+            <SelectItem value="1">Assigned</SelectItem>
+            <SelectItem value="2">Picked Up</SelectItem>
+            <SelectItem value="3">In Transit</SelectItem>
+            <SelectItem value="4">Delivered</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {error && (
@@ -121,23 +126,11 @@ export default function TransportsPage() {
 
       <DataTable
         columns={columns}
-        data={data?.items ?? []}
+        data={filtered}
         isLoading={isLoading}
         keyExtractor={(row) => row.id}
         emptyMessage="No transport tasks found."
       />
-
-      {data && (
-        <Pagination
-          page={data.page}
-          totalPages={data.totalPages}
-          totalCount={data.totalCount}
-          pageSize={data.pageSize}
-          hasNextPage={data.hasNextPage}
-          hasPreviousPage={data.hasPreviousPage}
-          onPageChange={setPage}
-        />
-      )}
     </div>
   );
 }

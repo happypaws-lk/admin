@@ -3,18 +3,20 @@ import {
   API_BASE_URL,
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
+  REMEMBER_ME_COOKIE,
   COOKIE_SECURE,
   COOKIE_DOMAIN,
 } from "@/lib/constants";
 import type { AuthResponse } from "@/lib/types";
 
-function cookieOptions(path: string): Record<string, unknown> {
+function cookieOptions(path: string, rememberMe: boolean): Record<string, unknown> {
   return {
     httpOnly: true,
     secure: COOKIE_SECURE,
     sameSite: "strict" as const,
     path,
     ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+    ...(rememberMe ? { maxAge: 7 * 24 * 60 * 60 } : {}),
   };
 }
 
@@ -23,6 +25,8 @@ export async function POST(req: NextRequest) {
   if (!refreshToken) {
     return NextResponse.json({ message: "No refresh token" }, { status: 401 });
   }
+
+  const rememberMe = req.cookies.get(REMEMBER_ME_COOKIE)?.value === "1";
 
   const upstream = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
     method: "POST",
@@ -40,13 +44,23 @@ export async function POST(req: NextRequest) {
   res.cookies.set(
     ACCESS_TOKEN_COOKIE,
     auth.accessToken,
-    cookieOptions("/") as Parameters<typeof res.cookies.set>[2]
+    cookieOptions("/", rememberMe) as Parameters<typeof res.cookies.set>[2]
   );
   res.cookies.set(
     REFRESH_TOKEN_COOKIE,
     auth.refreshToken,
-    cookieOptions("/api/auth") as Parameters<typeof res.cookies.set>[2]
+    cookieOptions("/", rememberMe) as Parameters<typeof res.cookies.set>[2]
   );
+
+  if (rememberMe) {
+    res.cookies.set(REMEMBER_ME_COOKIE, "1", {
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+      secure: COOKIE_SECURE,
+      sameSite: "strict",
+      ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+    } as Parameters<typeof res.cookies.set>[2]);
+  }
 
   return res;
 }

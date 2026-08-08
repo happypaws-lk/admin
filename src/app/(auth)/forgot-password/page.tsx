@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 const schema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -21,25 +22,34 @@ export default function ForgotPasswordPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    getValues,
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   const onSubmit = async (values: FormValues) => {
     setApiError(null);
-    const res = await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: values.email }),
-    });
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/forgot-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: values.email }),
+        },
+      );
 
-    if (!res.ok && res.status !== 200) {
-      setApiError("Something went wrong. Please try again.");
-      return;
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setApiError(
+          (data as { message?: string; title?: string }).message ??
+            (data as { message?: string; title?: string }).title ??
+            "Something went wrong. Please try again.",
+        );
+        return;
+      }
+
+      router.push(`/verify-reset-code?email=${encodeURIComponent(values.email)}`);
+    } catch {
+      setApiError("Unable to reach the server. Check your connection.");
     }
-
-    router.push(
-      `/verify-reset-code?email=${encodeURIComponent(values.email)}`
-    );
   };
 
   return (
@@ -47,7 +57,12 @@ export default function ForgotPasswordPage() {
       <div className="absolute -top-24 -left-24 w-[450px] sm:w-[550px] h-[450px] sm:h-[550px] bg-[#685cf0]/20 rounded-full blur-[120px] pointer-events-none" aria-hidden="true" />
       <div className="absolute -bottom-28 -right-28 w-[500px] sm:w-[650px] h-[500px] sm:h-[650px] bg-[#4a29a0]/30 rounded-full blur-[140px] pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-10 w-full max-w-[430px] p-7 sm:p-9 rounded-2xl bg-[#131627]/65 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/80">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        className="relative z-10 w-full max-w-[430px] p-7 sm:p-9 rounded-2xl bg-[#131627]/65 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/80"
+      >
         <h1 className="text-2xl sm:text-[30px] font-bold text-white text-center mt-2 mb-2 tracking-tight">
           Forgot password?
         </h1>
@@ -93,11 +108,14 @@ export default function ForgotPasswordPage() {
         </form>
 
         <div className="mt-7 text-center">
-          <Link href="/login" className="text-sm text-slate-400 hover:text-slate-200 font-medium transition-colors inline-flex items-center space-x-1">
+          <Link
+            href="/login"
+            className="text-sm text-slate-400 hover:text-slate-200 font-medium transition-colors inline-flex items-center space-x-1"
+          >
             <span>&larr; Back to login</span>
           </Link>
         </div>
-      </div>
+      </motion.div>
     </main>
   );
 }

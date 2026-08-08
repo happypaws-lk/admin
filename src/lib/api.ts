@@ -106,4 +106,28 @@ export const apiClient = {
     const res = await request(path, { method: "DELETE" });
     if (!res.ok) return parseError(res);
   },
+
+  async postForm<T = void>(
+    path: string,
+    body: FormData,
+    params?: Record<string, string | number | boolean | undefined | null>,
+  ): Promise<T> {
+    const url = buildUrl(path, params);
+    const res = await request(url, { method: "POST", body });
+    if (!res.ok) return parseError(res);
+    if (res.status === 204) return undefined as unknown as T;
+    return res.json() as Promise<T>;
+  },
+
+  async putForm<T = void>(
+    path: string,
+    body: FormData,
+    params?: Record<string, string | number | boolean | undefined | null>,
+  ): Promise<T> {
+    const url = buildUrl(path, params);
+    const res = await request(url, { method: "PUT", body });
+    if (!res.ok) return parseError(res);
+    if (res.status === 204) return undefined as unknown as T;
+    return res.json() as Promise<T>;
+  },
 };

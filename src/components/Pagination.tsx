@@ -19,7 +19,9 @@ export function Pagination({
   hasPreviousPage,
   onPageChange,
 }: PaginationProps) {
-  const from = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  if (totalCount === 0) return null;
+
+  const from = (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, totalCount);
 
   const pages = buildPageNumbers(page, totalPages);
@@ -27,7 +29,7 @@ export function Pagination({
   return (
     <div className="flex items-center justify-between px-1 py-2 mt-2">
       <p className="text-xs text-slate-500">
-        {totalCount > 0 ? `Showing ${from}–${to} of ${totalCount}` : "No results"}
+        Showing {from}–{to} of {totalCount}
       </p>
 
       {totalPages > 1 && (
@@ -98,8 +100,8 @@ function PageBtn({
       title={title}
       className={`min-w-[32px] h-8 px-2 rounded-lg text-xs font-medium transition-colors ${
         active
-          ? "bg-[#5b50e6] text-white"
-          : "text-slate-400 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed"
+          ? "bg-zinc-100 text-zinc-950 font-bold border border-zinc-200"
+          : "text-zinc-400 hover:text-white hover:bg-zinc-800/80 disabled:opacity-30 disabled:cursor-not-allowed border border-transparent hover:border-zinc-700"
       }`}
     >
       {label}

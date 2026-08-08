@@ -28,14 +28,14 @@ export function DataTable<T>({
   emptyMessage = "No results found.",
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-[#121215] shadow-sm">
+      <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-white/10 bg-white/[0.03]">
+          <tr className="border-b border-zinc-800 bg-zinc-900/80">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400"
+                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400"
                 style={col.width ? { width: col.width } : undefined}
               >
                 {col.header}
@@ -43,14 +43,14 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-zinc-800/60">
           {isLoading
             ? Array.from({ length: skeletonRows }).map((_, i) => (
-                <tr key={i} className="border-b border-white/5">
+                <tr key={i} className="border-b border-zinc-800/60">
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3.5">
                       <div
-                        className="h-3.5 rounded-md bg-white/10 animate-pulse"
+                        className="h-3.5 rounded-md bg-zinc-800 animate-pulse"
                         style={{ width: col.width ?? "75%" }}
                       />
                     </td>
@@ -62,7 +62,7 @@ export function DataTable<T>({
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-14 text-center text-sm text-slate-500"
+                    className="px-4 py-14 text-center text-sm text-zinc-500"
                   >
                     {emptyMessage}
                   </td>
@@ -73,13 +73,13 @@ export function DataTable<T>({
                     key={keyExtractor(row)}
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.025, duration: 0.2 }}
-                    className="border-b border-white/5 hover:bg-white/[0.025] transition-colors"
+                    transition={{ delay: i * 0.02, duration: 0.15 }}
+                    className="border-b border-zinc-800/60 hover:bg-zinc-800/40 transition-colors"
                   >
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className="px-4 py-3 text-slate-300 align-middle"
+                        className="px-4 py-3 text-zinc-200 align-middle"
                       >
                         {col.render
                           ? col.render(row)

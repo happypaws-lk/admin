@@ -8,12 +8,9 @@ import type { AdminCaseResponse } from "@/lib/types";
 import Link from "next/link";
 
 function getMarkerIcon(urgency: string) {
+  const u = urgency.toLowerCase();
   const color =
-    urgency === "Critical"
-      ? "#ef4444"
-      : urgency === "Moderate"
-        ? "#f59e0b"
-        : "#22c55e";
+    u === "critical" ? "#ef4444" : u === "moderate" ? "#f59e0b" : "#22c55e";
   return L.divIcon({
     className: "",
     html: `<div style="width:18px;height:18px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.55);"></div>`,
@@ -29,7 +26,6 @@ interface RescueMapProps {
 
 export default function RescueMap({ cases }: RescueMapProps) {
   useEffect(() => {
-    // reset any cached url lookups that can break in Next.js
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (L.Icon.Default.prototype as any)._getIconUrl;
   }, []);
@@ -51,13 +47,12 @@ export default function RescueMap({ cases }: RescueMapProps) {
       {plotted.map((c) => (
         <Marker
           key={c.id}
-          position={[c.latitude!, c.longitude!]}
+          position={[c.latitude, c.longitude]}
           icon={getMarkerIcon(c.urgency)}
         >
           <Popup>
             <div className="text-xs space-y-1 min-w-[160px]">
-              <p className="font-bold text-sm">{c.title}</p>
-              <p className="text-gray-600">{c.location}</p>
+              <p className="font-bold text-sm">{c.locationName}</p>
               <p>
                 <span className="font-medium">Urgency:</span> {c.urgency}
               </p>

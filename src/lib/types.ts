@@ -194,24 +194,63 @@ export const PLEDGE_STATUS_LABELS: Record<number, string> = {
   1: "Confirmed",
 };
 
-// ─── Admin DTOs ───────────────────────────────────────────────────────────────
+// ─── User / Profile ───────────────────────────────────────────────────────────
 
-export interface DashboardStatsResponse {
+export interface BadgeResponse {
+  badgeType: string;
+  awardedAt: string;
+}
+
+export interface UserProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  isVerified: boolean;
+  reputationPoints: number;
+  badges: BadgeResponse[];
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+export interface DashboardUserGrowth {
+  date: string;
+  totalUsers: number;
+  newUsers: number;
+  verifiedUsers: number;
+}
+
+export interface DashboardAdoptionActivity {
+  date: string;
+  applications: number;
+  adoptions: number;
+}
+
+export interface DashboardResponse {
   pendingKycCount: number;
   openRescueCasesCount: number;
   totalUsersCount: number;
-  activeListingsCount: number;
-  recentModerationLogs: ModerationLogResponse[];
+  recentActivity: ModerationLogResponse[];
+  userGrowth?: DashboardUserGrowth[];
+  adoptionActivity?: DashboardAdoptionActivity[];
 }
+
+/** Frontend-augmented version with activeListingsCount added client-side. */
+export interface DashboardStatsResponse extends DashboardResponse {
+  activeListingsCount?: number;
+}
+
+// ─── Admin Users ──────────────────────────────────────────────────────────────
 
 export interface AdminUserResponse {
   id: string;
+  name: string;
   email: string;
-  roles: string[];
   isVerified: boolean;
   isSuspended: boolean;
+  reputationPoints: number;
+  roles: string[];
   createdAt: string;
-  reputationScore: number;
 }
 
 export interface AdminUserDetailResponse extends AdminUserResponse {
@@ -225,8 +264,8 @@ export interface SuspendUserRequest {
   reason: string;
 }
 
-export interface AdjustReputationRequest {
-  delta: number;
+export interface ReputationAdjustRequest {
+  pointsToAdjust: number;
   reason: string;
 }
 
@@ -235,11 +274,11 @@ export interface AdjustReputationRequest {
 export interface KycPendingResponse {
   id: string;
   userId: string;
+  userName: string;
   userEmail: string;
   documentType: DocumentType;
   documentUrl: string;
-  status: DocumentStatus;
-  submittedAt: string;
+  uploadedAt: string;
 }
 
 export interface RejectKycRequest {
@@ -248,73 +287,125 @@ export interface RejectKycRequest {
 
 // ─── Rescue Cases ─────────────────────────────────────────────────────────────
 
-export interface RescueCaseUpdateResponse {
-  id: string;
-  message: string;
-  updateType: UpdateType;
-  createdAt: string;
-  createdByEmail: string;
-}
-
+/** Response from GET /api/v1/admin/cases — used only for the live map. */
 export interface AdminCaseResponse {
   id: string;
-  title: string;
-  description?: string;
-  location: string;
-  latitude?: number;
-  longitude?: number;
-  /** Explicit string property — values: "Low" | "Moderate" | "Critical" */
+  longitude: number;
+  latitude: number;
+  locationName: string;
   urgency: string;
-  /** Explicit string property — values: "Open" | "InProgress" | "Resolved" */
   status: string;
+}
+
+/** Response from GET /api/v1/rescues (paginated list). */
+export interface RescueCaseSummaryResponse {
+  id: string;
+  locationName: string;
+  photoUrl: string;
+  urgency: Urgency;
+  status: CaseStatus;
+  createdAt: string;
+}
+
+/** Response from GET /api/v1/rescues/{id} (full detail). */
+export interface RescueCaseResponse {
+  id: string;
+  reporterId: string;
+  reporterName: string;
+  assignedFosterId: string | null;
+  assignedFosterName: string | null;
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  description: string;
+  photoUrl: string;
+  conditionNotes: string | null;
+  urgency: Urgency;
+  originalAiUrgency: Urgency | null;
   urgencySource: UrgencySource;
-  reportedById?: string;
-  reportedByEmail: string;
+  status: CaseStatus;
   createdAt: string;
   updatedAt: string;
-  resolvedAt?: string;
-  updates: RescueCaseUpdateResponse[];
+}
+
+export interface CaseUpdateResponse {
+  id: string;
+  userId: string;
+  userName: string;
+  updateType: UpdateType;
+  updateText: string;
+  photoUrl: string | null;
+  createdAt: string;
 }
 
 export interface UrgencyOverrideRequest {
   urgency: Urgency;
-  reason: string;
 }
 
 export interface AddCaseUpdateRequest {
-  message: string;
   updateType: UpdateType;
+  updateText: string;
 }
 
 // ─── Listings ─────────────────────────────────────────────────────────────────
 
-export interface AdminListingResponse {
+export interface ListingPhotoResponse {
   id: string;
-  title: string;
-  description?: string;
+  photoUrl: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
+/** Response from GET /api/v1/listings (browse). */
+export interface ListingResponse {
+  id: string;
+  name: string;
   species: string;
-  breed?: string;
-  ageMonths?: number;
-  size: AnimalSize;
+  breed: string;
+  ageMonths: number;
+  ageLabel: string | null;
   gender: Gender;
-  listingStatus: ListingStatus;
-  photoUrls: string[];
-  location: string;
-  postedByEmail: string;
+  size: AnimalSize;
+  activityLevel: number;
+  locationName: string;
+  status: ListingStatus;
+  primaryPhotoUrl: string | null;
+  createdAt: string;
+}
+
+/** Response from GET /api/v1/listings/{id} (detail). */
+export interface ListingDetailResponse {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  rescueCaseId: string | null;
+  name: string;
+  species: string;
+  breed: string;
+  ageMonths: number;
+  ageLabel: string | null;
+  gender: Gender;
+  size: AnimalSize;
+  activityLevel: number;
+  description: string;
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  status: ListingStatus;
   createdAt: string;
   updatedAt: string;
-  isVaccinated: boolean;
-  isNeutered: boolean;
+  photos: ListingPhotoResponse[];
 }
 
 export interface ApplicationResponse {
   id: string;
   listingId: string;
+  listingName: string;
   applicantId: string;
-  applicantEmail: string;
-  note?: string;
+  applicantName: string;
   status: ApplicationStatus;
-  createdAt: string;
+  reviewNotes: string | null;
+  appliedAt: string;
   updatedAt: string;
 }
 
@@ -322,13 +413,11 @@ export interface ApplicationResponse {
 
 export interface ModerationLogResponse {
   id: string;
-  /** Explicit string property — values: "Listing" | "Message" | "User" */
+  adminId: string;
   targetType: string;
   targetId: string;
-  /** Explicit string property — values: "Removed" | "Suspended" | "Warned" */
   actionType: string;
   reason: string;
-  performedByEmail: string;
   createdAt: string;
 }
 
@@ -343,26 +432,47 @@ export interface CreateModerationActionRequest {
 
 export interface TransportTaskResponse {
   id: string;
-  rescueCaseId: string;
-  caseTitle: string;
+  caseId: string;
+  transporterId: string | null;
+  transporterName: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
   pickupLocation: string;
+  dropoffLatitude: number;
+  dropoffLongitude: number;
   dropoffLocation: string;
   status: TransportStatus;
-  assignedToId?: string;
-  assignedToEmail?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+export interface NotificationResponse {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  referenceId: string | null;
+  referenceType: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface UnreadCountResponse {
+  count: number;
 }
 
 // ─── Pledges ─────────────────────────────────────────────────────────────────
 
 export interface PledgeResponse {
   id: string;
-  userId: string;
-  userEmail: string;
+  sponsorId: string;
+  sponsorName: string;
+  caseId: string | null;
+  listingId: string | null;
   amount: number;
-  rescueCaseId?: string;
-  caseTitle?: string;
   status: PledgeStatus;
+  note: string | null;
   createdAt: string;
 }

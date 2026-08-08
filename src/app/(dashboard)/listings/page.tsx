@@ -3,17 +3,25 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { apiClient } from "@/lib/api";
-import type { AdminListingResponse, PagedResult } from "@/lib/types";
+import type { ListingResponse, PagedResult } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
 import { Pagination } from "@/components/Pagination";
 import { StatusBadge } from "@/components/StatusBadge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PAGE_SIZE = 20;
 
 export default function ListingsPage() {
-  const [data, setData] = useState<PagedResult<AdminListingResponse> | null>(null);
+  const [data, setData] = useState<PagedResult<ListingResponse> | null>(null);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
+  const [speciesFilter, setSpeciesFilter] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,12 +29,13 @@ export default function ListingsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await apiClient.get<PagedResult<AdminListingResponse>>(
-        "/api/v1/admin/listings",
+      const result = await apiClient.get<PagedResult<ListingResponse>>(
+        "/api/v1/listings",
         {
-          page,
-          pageSize: PAGE_SIZE,
+          Page: page,
+          PageSize: PAGE_SIZE,
           ...(statusFilter !== "" ? { status: statusFilter } : {}),
+          ...(speciesFilter ? { species: speciesFilter } : {}),
         },
       );
       setData(result);
@@ -35,22 +44,22 @@ export default function ListingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, statusFilter]);
+  }, [page, statusFilter, speciesFilter]);
 
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
-  const columns: Column<AdminListingResponse>[] = [
+  const columns: Column<ListingResponse>[] = [
     {
-      key: "title",
-      header: "Title",
+      key: "name",
+      header: "Name",
       render: (row) => (
         <Link
           href={`/listings/${row.id}`}
           className="text-[#818cf8] hover:text-indigo-300 font-medium transition-colors"
         >
-          {row.title}
+          {row.name}
         </Link>
       ),
     },
@@ -65,20 +74,15 @@ export default function ListingsPage() {
       ),
     },
     {
-      key: "listingStatus",
+      key: "status",
       header: "Status",
-      render: (row) => <StatusBadge variant="listingStatus" value={row.listingStatus} />,
+      render: (row) => <StatusBadge variant="listingStatus" value={row.status} />,
       width: "110px",
     },
     {
-      key: "location",
+      key: "locationName",
       header: "Location",
-      render: (row) => <span className="text-slate-400 text-xs">{row.location}</span>,
-    },
-    {
-      key: "postedByEmail",
-      header: "Posted by",
-      render: (row) => <span className="text-slate-400 text-xs">{row.postedByEmail}</span>,
+      render: (row) => <span className="text-slate-400 text-xs">{row.locationName}</span>,
     },
     {
       key: "createdAt",
@@ -113,16 +117,30 @@ export default function ListingsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 rounded-xl bg-[#0d0f17] border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all"
+        <Select
+          value={statusFilter || "ALL"}
+          onValueChange={(val) => {
+            setStatusFilter(val === "ALL" ? "" : val);
+            setPage(1);
+          }}
         >
-          <option value="">All statuses</option>
-          <option value="0">Available</option>
-          <option value="1">Pending</option>
-          <option value="2">Adopted</option>
-        </select>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All statuses</SelectItem>
+            <SelectItem value="0">Available</SelectItem>
+            <SelectItem value="1">Pending</SelectItem>
+            <SelectItem value="2">Adopted</SelectItem>
+          </SelectContent>
+        </Select>
+        <input
+          type="text"
+          placeholder="Filter by species…"
+          value={speciesFilter}
+          onChange={(e) => { setSpeciesFilter(e.target.value); setPage(1); }}
+          className="px-3.5 py-2 rounded-xl bg-zinc-900/90 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-zinc-700 transition-all w-48 placeholder:text-zinc-500"
+        />
       </div>
 
       {error && (

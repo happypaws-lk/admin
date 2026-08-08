@@ -7,6 +7,13 @@ import type { AdminUserResponse, PagedResult } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
 import { Pagination } from "@/components/Pagination";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PAGE_SIZE = 20;
 
@@ -54,11 +61,11 @@ export default function UsersPage() {
   const handleSuspendAction = async (reason: string | undefined) => {
     if (!confirmAction) return;
     if (confirmAction.action === "suspend") {
-      await apiClient.post(`/api/v1/admin/users/${confirmAction.userId}/suspend`, {
+      await apiClient.put(`/api/v1/admin/users/${confirmAction.userId}/suspend`, {
         reason: reason ?? "",
       });
     } else {
-      await apiClient.post(`/api/v1/admin/users/${confirmAction.userId}/unsuspend`);
+      await apiClient.put(`/api/v1/admin/users/${confirmAction.userId}/unsuspend`);
     }
     setConfirmAction(null);
     fetchUsers();
@@ -85,10 +92,10 @@ export default function UsersPage() {
       ),
     },
     {
-      key: "reputationScore",
+      key: "reputationPoints",
       header: "Reputation",
       render: (row) => (
-        <span className="tabular-nums text-slate-300">{(row.reputationScore ?? 0).toFixed(1)}</span>
+        <span className="tabular-nums text-slate-300">{row.reputationPoints ?? 0}</span>
       ),
       width: "110px",
     },
@@ -177,36 +184,45 @@ export default function UsersPage() {
             setEmailFilter(e.target.value);
             setPage(1);
           }}
-          className="px-3.5 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] focus:ring-1 focus:ring-[#5b50e6] transition-all w-56 placeholder:text-slate-600"
+          className="px-3.5 py-2 rounded-xl bg-zinc-900/90 border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-zinc-700 transition-all w-64 placeholder:text-zinc-500"
         />
-        <select
-          value={roleFilter}
-          onChange={(e) => {
-            setRoleFilter(e.target.value);
+        <Select
+          value={roleFilter || "ALL"}
+          onValueChange={(val) => {
+            setRoleFilter(val === "ALL" ? "" : val);
             setPage(1);
           }}
-          className="px-3 py-2 rounded-xl bg-[#0d0f17] border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all"
         >
-          <option value="">All roles</option>
-          <option value="Adopter">Adopter</option>
-          <option value="Foster">Foster</option>
-          <option value="Transporter">Transporter</option>
-          <option value="Sponsor">Sponsor</option>
-          <option value="Veterinarian">Veterinarian</option>
-          <option value="Admin">Admin</option>
-        </select>
-        <select
-          value={suspendedFilter}
-          onChange={(e) => {
-            setSuspendedFilter(e.target.value as "" | "true" | "false");
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="All roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All roles</SelectItem>
+            <SelectItem value="Adopter">Adopter</SelectItem>
+            <SelectItem value="Foster">Foster</SelectItem>
+            <SelectItem value="Transporter">Transporter</SelectItem>
+            <SelectItem value="Sponsor">Sponsor</SelectItem>
+            <SelectItem value="Veterinarian">Veterinarian</SelectItem>
+            <SelectItem value="Admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={suspendedFilter || "ALL"}
+          onValueChange={(val) => {
+            setSuspendedFilter((val === "ALL" ? "" : val) as "" | "true" | "false");
             setPage(1);
           }}
-          className="px-3 py-2 rounded-xl bg-[#0d0f17] border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all"
         >
-          <option value="">All statuses</option>
-          <option value="false">Active</option>
-          <option value="true">Suspended</option>
-        </select>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All statuses</SelectItem>
+            <SelectItem value="false">Active</SelectItem>
+            <SelectItem value="true">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {error && (

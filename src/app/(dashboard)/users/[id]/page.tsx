@@ -54,15 +54,15 @@ export default function UserDetailPage({
   const handleReputation = async (e: React.FormEvent) => {
     e.preventDefault();
     setRepError(null);
-    const delta = parseFloat(repDelta);
-    if (isNaN(delta)) {
-      setRepError("Delta must be a valid number.");
+    const pointsToAdjust = parseInt(repDelta, 10);
+    if (isNaN(pointsToAdjust)) {
+      setRepError("Points must be a valid integer.");
       return;
     }
     setRepPending(true);
     try {
-      await apiClient.post(`/api/v1/admin/users/${id}/reputation`, {
-        delta,
+      await apiClient.put(`/api/v1/admin/reputation/${id}`, {
+        pointsToAdjust,
         reason: repReason.trim(),
       });
       setRepSuccess(true);
@@ -80,9 +80,9 @@ export default function UserDetailPage({
   const handleSuspendToggle = async (reason: string | undefined) => {
     if (!user) return;
     if (user.isSuspended) {
-      await apiClient.post(`/api/v1/admin/users/${id}/unsuspend`);
+      await apiClient.put(`/api/v1/admin/users/${id}/unsuspend`);
     } else {
-      await apiClient.post(`/api/v1/admin/users/${id}/suspend`, {
+      await apiClient.put(`/api/v1/admin/users/${id}/suspend`, {
         reason: reason ?? "",
       });
     }
@@ -137,7 +137,7 @@ export default function UserDetailPage({
           { label: "User ID", value: user.id },
           { label: "Email", value: user.email },
           { label: "Roles", value: (user.roles ?? []).join(", ") || "—" },
-          { label: "Reputation Score", value: (user.reputationScore ?? 0).toFixed(2) },
+          { label: "Reputation Points", value: String(user.reputationPoints ?? 0) },
           { label: "Verified", value: user.isVerified ? "Yes" : "No" },
           { label: "Status", value: user.isSuspended ? "Suspended" : "Active" },
           { label: "Joined", value: new Date(user.createdAt).toLocaleString() },
@@ -171,14 +171,14 @@ export default function UserDetailPage({
         <form onSubmit={handleReputation} className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1.5">
-              Delta (positive or negative)
+              Points to adjust (positive or negative integer)
             </label>
             <input
               type="number"
-              step="0.1"
+              step="1"
               value={repDelta}
               onChange={(e) => setRepDelta(e.target.value)}
-              placeholder="e.g. 1.5 or -0.5"
+              placeholder="e.g. 10 or -5"
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] focus:ring-1 focus:ring-[#5b50e6] transition-all placeholder:text-slate-600"
               required
             />

@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { apiClient, ApiError } from "@/lib/api";
-import type { AdminListingResponse, ApplicationResponse, PagedResult } from "@/lib/types";
+import type { ListingDetailResponse, ApplicationResponse } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -17,7 +17,7 @@ export default function ListingDetailPage({
 }) {
   const { id } = use(params);
 
-  const [listing, setListing] = useState<AdminListingResponse | null>(null);
+  const [listing, setListing] = useState<ListingDetailResponse | null>(null);
   const [applications, setApplications] = useState<ApplicationResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [appsLoading, setAppsLoading] = useState(true);
@@ -34,13 +34,15 @@ export default function ListingDetailPage({
       setError(null);
       try {
         const [listingData, appsData] = await Promise.all([
-          apiClient.get<AdminListingResponse>(`/api/v1/admin/listings/${id}`),
+          apiClient.get<ListingDetailResponse>(`/api/v1/listings/${id}`),
           apiClient
-            .get<PagedResult<ApplicationResponse>>(`/api/v1/listings/${id}/applications`)
+            .get<ApplicationResponse[]>(
+              `/api/v1/applications/api/v1/listings/${id}/applications`,
+            )
             .catch(() => null),
         ]);
         setListing(listingData);
-        setApplications(appsData?.items ?? []);
+        setApplications(appsData ?? []);
       } catch (e) {
         setError(
           e instanceof ApiError && e.status === 404
@@ -75,9 +77,9 @@ export default function ListingDetailPage({
 
   const appColumns: Column<ApplicationResponse>[] = [
     {
-      key: "applicantEmail",
+      key: "applicantName",
       header: "Applicant",
-      render: (row) => <span className="text-slate-200">{row.applicantEmail}</span>,
+      render: (row) => <span className="text-slate-200">{row.applicantName}</span>,
     },
     {
       key: "status",
@@ -86,14 +88,21 @@ export default function ListingDetailPage({
       width: "110px",
     },
     {
-      key: "createdAt",
+      key: "appliedAt",
       header: "Applied",
       render: (row) => (
         <span className="text-slate-400 text-xs">
-          {new Date(row.createdAt).toLocaleDateString()}
+          {new Date(row.appliedAt).toLocaleDateString()}
         </span>
       ),
       width: "110px",
+    },
+    {
+      key: "reviewNotes",
+      header: "Notes",
+      render: (row) => (
+        <span className="text-slate-500 text-xs line-clamp-1">{row.reviewNotes ?? "—"}</span>
+      ),
     },
   ];
 
@@ -118,6 +127,8 @@ export default function ListingDetailPage({
     );
   }
 
+  const photos = listing.photos ?? [];
+
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
@@ -125,7 +136,7 @@ export default function ListingDetailPage({
           <Link href="/listings" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
             ← Listings
           </Link>
-          <h1 className="text-xl font-bold text-white mt-1">{listing.title}</h1>
+          <h1 className="text-xl font-bold text-white mt-1">{listing.name}</h1>
         </div>
         <button
           onClick={() => setRemoveDialog(true)}
@@ -136,22 +147,22 @@ export default function ListingDetailPage({
         </button>
       </div>
 
-      {(listing.photoUrls ?? []).length > 0 && (
+      {photos.length > 0 && (
         <div className="space-y-2">
           <div className="relative w-full h-56 rounded-xl overflow-hidden bg-slate-900">
             <Image
-              src={listing.photoUrls[selectedPhoto]}
-              alt={listing.title}
+              src={photos[selectedPhoto].photoUrl}
+              alt={listing.name}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 672px"
             />
           </div>
-          {(listing.photoUrls ?? []).length > 1 && (
+          {photos.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {(listing.photoUrls ?? []).map((url, i) => (
+              {photos.map((photo, i) => (
                 <button
-                  key={i}
+                  key={photo.id}
                   onClick={() => setSelectedPhoto(i)}
                   className={`relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-colors ${
                     i === selectedPhoto
@@ -160,7 +171,7 @@ export default function ListingDetailPage({
                   }`}
                 >
                   <Image
-                    src={url}
+                    src={photo.photoUrl}
                     alt={`Photo ${i + 1}`}
                     fill
                     className="object-cover"
@@ -175,16 +186,18 @@ export default function ListingDetailPage({
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] divide-y divide-white/5">
         {[
-          { label: "Status", value: <StatusBadge variant="listingStatus" value={listing.listingStatus} /> },
+          { label: "Status", value: <StatusBadge variant="listingStatus" value={listing.status} /> },
           { label: "Species", value: listing.species },
           ...(listing.breed ? [{ label: "Breed", value: listing.breed }] : []),
-          ...(listing.ageMonths != null ? [{ label: "Age", value: `${listing.ageMonths} months` }] : []),
-          { label: "Location", value: listing.location },
-          { label: "Posted by", value: listing.postedByEmail },
+          ...(listing.ageLabel
+            ? [{ label: "Age", value: listing.ageLabel }]
+            : listing.ageMonths != null
+              ? [{ label: "Age", value: `${listing.ageMonths} months` }]
+              : []),
+          { label: "Location", value: listing.locationName },
+          { label: "Owner", value: listing.ownerName },
           { label: "Posted on", value: new Date(listing.createdAt).toLocaleString() },
           { label: "Last updated", value: new Date(listing.updatedAt).toLocaleString() },
-          { label: "Vaccinated", value: listing.isVaccinated ? "Yes" : "No" },
-          { label: "Neutered", value: listing.isNeutered ? "Yes" : "No" },
           ...(listing.description ? [{ label: "Description", value: listing.description }] : []),
         ].map(({ label, value }) => (
           <div key={label} className="px-5 py-3.5 flex items-start gap-4">
@@ -209,7 +222,7 @@ export default function ListingDetailPage({
 
       <ConfirmDialog
         isOpen={removeDialog}
-        title={`Remove "${listing.title}"?`}
+        title={`Remove "${listing.name}"?`}
         description="This will create a moderation action and remove the listing from the platform."
         destructive
         confirmLabel="Remove Listing"
