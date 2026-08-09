@@ -15,6 +15,9 @@ export interface AuthResponse {
 export interface UserClaims {
   sub: string;
   email: string;
+  name?: string;
+  given_name?: string;
+  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"?: string;
   role?: string | string[];
   "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"?: string | string[];
   /** Stored as string "True"/"False" by ASP.NET TokenService */
@@ -25,9 +28,21 @@ export interface UserClaims {
 
 export interface MeResponse {
   id: string;
+  name?: string | null;
   email: string;
   roles: string[];
   isVerified: boolean;
+  avatarUrl?: string | null;
+}
+
+export interface SetupStatusResponse {
+  isSetupComplete: boolean;
+}
+
+export interface SetupCompleteRequest {
+  name: string;
+  email: string;
+  password: string;
 }
 
 // ─── Password Reset ───────────────────────────────────────────────────────────

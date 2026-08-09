@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,17 +28,31 @@ const EyeOffIcon = () => (
 
 const EyeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7z" />
+    <path d="M22 12C22 12 19 5 12 5C5 5 2 12 2 12C2 12 5 19 12 19C19 19 22 12 22 12Z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 export default function LoginPage() {
+  const [setupChecked, setSetupChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { login } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/v1/setup/status")
+      .then((r) => r.json())
+      .then(({ isSetupComplete }: { isSetupComplete: boolean }) => {
+        if (!isSetupComplete) {
+          router.replace("/setup");
+        } else {
+          setSetupChecked(true);
+        }
+      })
+      .catch(() => setSetupChecked(true));
+  }, [router]);
 
   const {
     register,
@@ -48,6 +62,16 @@ export default function LoginPage() {
     resolver: zodResolver(schema),
     defaultValues: { rememberMe: false },
   });
+
+  if (!setupChecked) {
+    return (
+      <main className="relative min-h-screen w-full flex items-center justify-center bg-[#0d0f17] overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-[450px] sm:w-[550px] h-[450px] sm:h-[550px] bg-[#685cf0]/20 rounded-full blur-[120px] pointer-events-none" aria-hidden="true" />
+        <div className="absolute -bottom-28 -right-28 w-[500px] sm:w-[650px] h-[500px] sm:h-[650px] bg-[#4a29a0]/30 rounded-full blur-[140px] pointer-events-none" aria-hidden="true" />
+        <span className="relative z-10 inline-block w-7 h-7 border-2 border-[#5b50e6]/30 border-t-[#5b50e6] rounded-full animate-spin" />
+      </main>
+    );
+  }
 
   const onSubmit = async (values: FormValues) => {
     setApiError(null);

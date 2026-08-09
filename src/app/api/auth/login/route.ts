@@ -62,10 +62,41 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  let name: string | null = null;
+  let avatarUrl: string | null = null;
+
+  try {
+    const profileRes = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+      headers: { Authorization: `Bearer ${auth.accessToken}` },
+    });
+    if (profileRes.ok) {
+      const profile = await profileRes.json();
+      if (profile?.name) name = profile.name;
+      if (profile?.avatarUrl) avatarUrl = profile.avatarUrl;
+    }
+  } catch {
+    // Ignore fallback
+  }
+
+  if (!name) {
+    name =
+      claims.name ??
+      claims["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ??
+      claims.given_name ??
+      null;
+  }
+
   const roles = normalizeRoles(claims);
   const isVerifiedRaw = claims.is_verified;
   const isVerified = isVerifiedRaw === true || isVerifiedRaw === "True";
-  const res = NextResponse.json({ id: claims.sub, email: claims.email, roles, isVerified });
+  const res = NextResponse.json({
+    id: claims.sub,
+    name,
+    email: claims.email,
+    roles,
+    isVerified,
+    avatarUrl,
+  });
 
   res.cookies.set(
     ACCESS_TOKEN_COOKIE,

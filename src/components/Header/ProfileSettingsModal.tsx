@@ -74,7 +74,7 @@ export function ProfileSettingsModal({
                 id="display-name"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                placeholder="e.g. System Administrator"
+                placeholder="e.g. Admin User"
               />
             </div>
 
@@ -85,7 +85,7 @@ export function ProfileSettingsModal({
                   id="email"
                   type="email"
                   disabled
-                  value={user?.email || "admin@happypaws.lk"}
+                  value={user?.email || ""}
                   className="pr-20 cursor-not-allowed"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">

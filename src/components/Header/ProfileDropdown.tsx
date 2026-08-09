@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 function getInitials(name: string) {
   const parts = name.trim().split(" ");
@@ -19,9 +19,8 @@ function getInitials(name: string) {
 }
 
 function getDisplayNameFromEmail(email?: string): string {
-  if (!email) return "System Administrator";
+  if (!email) return "Admin User";
   const namePart = email.split("@")[0];
-  if (namePart.toLowerCase() === "admin") return "System Administrator";
   return namePart
     .replace(/[._-]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -31,8 +30,8 @@ export function ProfileDropdown() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  const displayName = getDisplayNameFromEmail(user?.email);
-  const userEmail = user?.email || "admin@happypaws.lk";
+  const displayName = user?.name || getDisplayNameFromEmail(user?.email);
+  const userEmail = user?.email || "";
 
   const handleLogout = async () => {
     await logout();
@@ -47,6 +46,9 @@ export function ProfileDropdown() {
           aria-label="User profile menu"
         >
           <Avatar className="h-8 w-8 cursor-pointer border border-zinc-700">
+            {user?.avatarUrl && (
+              <AvatarImage src={user.avatarUrl} alt={displayName} />
+            )}
             <AvatarFallback className="text-[11px] font-bold bg-zinc-800 text-zinc-100">
               {getInitials(displayName)}
             </AvatarFallback>
@@ -59,6 +61,9 @@ export function ProfileDropdown() {
         {/* User Info Header */}
         <div className="px-3 py-2.5 flex items-center gap-3 border-b border-zinc-800/80 mb-1">
           <Avatar className="h-9 w-9 border border-zinc-700">
+            {user?.avatarUrl && (
+              <AvatarImage src={user.avatarUrl} alt={displayName} />
+            )}
             <AvatarFallback className="text-xs font-bold bg-zinc-800 text-white">
               {getInitials(displayName)}
             </AvatarFallback>

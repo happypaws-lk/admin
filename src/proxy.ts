@@ -15,6 +15,7 @@ import type { AuthResponse } from "@/lib/types";
 
 const AUTH_ROUTES = [
   "/login",
+  "/setup",
   "/forgot-password",
   "/verify-reset-code",
   "/reset-password",
