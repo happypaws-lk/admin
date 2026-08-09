@@ -23,7 +23,7 @@ interface Props {
 export function DashboardClient({ stats }: Props) {
   if (!stats) {
     return (
-      <div className="flex items-center justify-center h-40 text-zinc-500 text-sm">
+      <div className="flex items-center justify-center h-40 text-zinc-500 text-sm apple-body">
         Dashboard data unavailable — please refresh.
       </div>
     );
@@ -37,43 +37,48 @@ export function DashboardClient({ stats }: Props) {
   } = stats;
 
   return (
-    <div className="space-y-7 max-w-7xl mx-auto">
+    <div className="space-y-7 max-w-7xl mx-auto pb-10">
 
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Platform overview</h1>
-          <p className="text-slate-400 mt-1 text-sm">{formatDate()}</p>
+          <h1 className="text-3xl font-bold text-white apple-display-heading">Platform overview</h1>
+          <p className="text-zinc-400 mt-1 text-sm apple-body">{formatDate()}</p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1.5 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          System operational
+        <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3.5 py-1.5 shrink-0 shadow-sm backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-sm" />
+          <span className="apple-caption font-semibold">System operational</span>
         </div>
       </div>
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-        {/* 1. Rescue cases — neutral */}
+        {/* 1. Rescue cases */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0, type: "spring", stiffness: 280, damping: 22 }}
+          transition={{ delay: 0, type: "spring", bounce: 0, duration: 0.35 }}
           className="h-full"
         >
-          <Link href="/rescue-cases" className="group block h-full">
-            <div className="rounded-xl border border-zinc-800 bg-[#121215] p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:bg-zinc-900/60 group-hover:border-zinc-700">
+          <Link href="/rescue-cases" className="group block h-full focus:outline-none">
+            <motion.div
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+              className="apple-glass-card rounded-2xl p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:border-white/[0.16]"
+            >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
-                      <Heart className="w-3.5 h-3.5 text-zinc-400" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0 shadow-inner">
+                      <Heart className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <span className="text-xs font-medium text-zinc-400 truncate">Open rescue cases</span>
+                    <span className="text-xs font-semibold text-zinc-400 truncate tracking-tight">Open rescue cases</span>
                   </div>
                   {openRescueCasesCount > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-400 bg-zinc-800 border border-zinc-700 rounded-full px-2 py-0.5 shrink-0">
-                      <span className="w-1 h-1 rounded-full bg-zinc-400 animate-pulse" />
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-full px-2 py-0.5 shrink-0">
+                      <span className="w-1 h-1 rounded-full bg-rose-400 animate-pulse" />
                       Live
                     </span>
                   )}
@@ -82,41 +87,46 @@ export function DashboardClient({ stats }: Props) {
                 {openRescueCasesCount === 0 ? (
                   <div className="flex items-center gap-2 mt-1">
                     <CheckCircle2 className="w-4 h-4 text-zinc-500 shrink-0" />
-                    <span className="text-sm font-medium text-zinc-400">All clear</span>
+                    <span className="text-sm font-medium text-zinc-400 apple-body">All clear</span>
                   </div>
                 ) : (
-                  <p className="text-3xl font-bold text-zinc-100 tabular-nums tracking-tight">
+                  <p className="text-3xl font-bold text-zinc-100 tabular-nums apple-display-heading">
                     {openRescueCasesCount.toLocaleString()}
                   </p>
                 )}
               </div>
 
-              <p className="text-xs text-zinc-600 mt-4 flex items-center gap-1 group-hover:text-zinc-400 transition-colors">
-                View active cases <ArrowRight className="w-3 h-3" />
+              <p className="text-xs text-zinc-500 mt-4 flex items-center gap-1.5 group-hover:text-zinc-300 transition-colors apple-body">
+                View active cases <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </p>
-            </div>
+            </motion.div>
           </Link>
         </motion.div>
 
-        {/* 2. KYC queue — neutral */}
+        {/* 2. KYC queue */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06, type: "spring", stiffness: 280, damping: 22 }}
+          transition={{ delay: 0.05, type: "spring", bounce: 0, duration: 0.35 }}
           className="h-full"
         >
-          <Link href="/kyc" className="group block h-full">
-            <div className="rounded-xl border border-zinc-800 bg-[#121215] p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:bg-zinc-900/60 group-hover:border-zinc-700">
+          <Link href="/kyc" className="group block h-full focus:outline-none">
+            <motion.div
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+              className="apple-glass-card rounded-2xl p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:border-white/[0.16]"
+            >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
-                      <BadgeCheck className="w-3.5 h-3.5 text-zinc-400" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0 shadow-inner">
+                      <BadgeCheck className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <span className="text-xs font-medium text-zinc-400 truncate">Awaiting KYC review</span>
+                    <span className="text-xs font-semibold text-zinc-400 truncate tracking-tight">Awaiting KYC review</span>
                   </div>
                   {pendingKycCount > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-400 bg-zinc-800 border border-zinc-700 rounded-full px-2 py-0.5 shrink-0">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5 shrink-0">
                       Pending
                     </span>
                   )}
@@ -125,72 +135,82 @@ export function DashboardClient({ stats }: Props) {
                 {pendingKycCount === 0 ? (
                   <div className="flex items-center gap-2 mt-1">
                     <CheckCircle2 className="w-4 h-4 text-zinc-500 shrink-0" />
-                    <span className="text-sm font-medium text-zinc-400">Queue clear</span>
+                    <span className="text-sm font-medium text-zinc-400 apple-body">Queue clear</span>
                   </div>
                 ) : (
-                  <p className="text-3xl font-bold text-zinc-100 tabular-nums tracking-tight">
+                  <p className="text-3xl font-bold text-zinc-100 tabular-nums apple-display-heading">
                     {pendingKycCount.toLocaleString()}
                   </p>
                 )}
               </div>
 
-              <p className="text-xs text-zinc-600 mt-4 flex items-center gap-1 group-hover:text-zinc-400 transition-colors">
-                Open review queue <ArrowRight className="w-3 h-3" />
+              <p className="text-xs text-zinc-500 mt-4 flex items-center gap-1.5 group-hover:text-zinc-300 transition-colors apple-body">
+                Open review queue <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </p>
-            </div>
+            </motion.div>
           </Link>
         </motion.div>
 
-        {/* 3. Registered users — neutral */}
+        {/* 3. Registered users */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12, type: "spring", stiffness: 280, damping: 22 }}
+          transition={{ delay: 0.1, type: "spring", bounce: 0, duration: 0.35 }}
           className="h-full"
         >
-          <Link href="/users" className="group block h-full">
-            <div className="rounded-xl border border-zinc-800 bg-[#121215] p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:bg-zinc-900/60 group-hover:border-zinc-700">
+          <Link href="/users" className="group block h-full focus:outline-none">
+            <motion.div
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+              className="apple-glass-card rounded-2xl p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:border-white/[0.16]"
+            >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
-                      <Users className="w-3.5 h-3.5 text-zinc-400" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0 shadow-inner">
+                      <Users className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <span className="text-xs font-medium text-zinc-400 truncate">Registered users</span>
+                    <span className="text-xs font-semibold text-zinc-400 truncate tracking-tight">Registered users</span>
                   </div>
                 </div>
 
-                <p className="text-3xl font-bold text-zinc-100 tabular-nums tracking-tight">
+                <p className="text-3xl font-bold text-zinc-100 tabular-nums apple-display-heading">
                   {totalUsersCount.toLocaleString()}
                 </p>
               </div>
 
-              <p className="text-xs text-zinc-600 mt-4 flex items-center gap-1 group-hover:text-zinc-400 transition-colors">
-                Browse all users <ArrowRight className="w-3 h-3" />
+              <p className="text-xs text-zinc-500 mt-4 flex items-center gap-1.5 group-hover:text-zinc-300 transition-colors apple-body">
+                Browse all users <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </p>
-            </div>
+            </motion.div>
           </Link>
         </motion.div>
 
-        {/* 4. Active adoption listings — neutral */}
+        {/* 4. Active adoption listings */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18, type: "spring", stiffness: 280, damping: 22 }}
+          transition={{ delay: 0.15, type: "spring", bounce: 0, duration: 0.35 }}
           className="h-full"
         >
-          <Link href="/listings" className="group block h-full">
-            <div className="rounded-xl border border-zinc-800 bg-[#121215] p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:bg-zinc-900/60 group-hover:border-zinc-700">
+          <Link href="/listings" className="group block h-full focus:outline-none">
+            <motion.div
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+              className="apple-glass-card rounded-2xl p-5 h-full flex flex-col justify-between transition-colors duration-200 group-hover:border-white/[0.16]"
+            >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
-                      <Tag className="w-3.5 h-3.5 text-zinc-400" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0 shadow-inner">
+                      <Tag className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <span className="text-xs font-medium text-zinc-400 truncate">Adoption listings</span>
+                    <span className="text-xs font-semibold text-zinc-400 truncate tracking-tight">Adoption listings</span>
                   </div>
                   {activeListingsCount > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-400 bg-zinc-800 border border-zinc-700 rounded-full px-2 py-0.5 shrink-0">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5 shrink-0">
                       Active
                     </span>
                   )}
@@ -199,19 +219,19 @@ export function DashboardClient({ stats }: Props) {
                 {activeListingsCount === 0 ? (
                   <div className="flex items-center gap-2 mt-1">
                     <CheckCircle2 className="w-4 h-4 text-zinc-500 shrink-0" />
-                    <span className="text-sm font-medium text-zinc-400">No active listings</span>
+                    <span className="text-sm font-medium text-zinc-400 apple-body">No active listings</span>
                   </div>
                 ) : (
-                  <p className="text-3xl font-bold text-zinc-100 tabular-nums tracking-tight">
+                  <p className="text-3xl font-bold text-zinc-100 tabular-nums apple-display-heading">
                     {activeListingsCount.toLocaleString()}
                   </p>
                 )}
               </div>
 
-              <p className="text-xs text-zinc-600 mt-4 flex items-center gap-1 group-hover:text-zinc-400 transition-colors">
-                Manage listings <ArrowRight className="w-3 h-3" />
+              <p className="text-xs text-zinc-500 mt-4 flex items-center gap-1.5 group-hover:text-zinc-300 transition-colors apple-body">
+                Manage listings <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </p>
-            </div>
+            </motion.div>
           </Link>
         </motion.div>
 
@@ -219,9 +239,9 @@ export function DashboardClient({ stats }: Props) {
 
       {/* ── Charts Grid ── */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.2, type: "spring", bounce: 0, duration: 0.35 }}
         className="grid grid-cols-1 lg:grid-cols-2 gap-5"
       >
         {/* Left: User Growth Chart */}
@@ -234,3 +254,4 @@ export function DashboardClient({ stats }: Props) {
     </div>
   );
 }
+

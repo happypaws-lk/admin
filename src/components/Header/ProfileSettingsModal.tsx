@@ -68,7 +68,7 @@ export function ProfileSettingsModal({
               </div>
             )}
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="display-name" className="text-xs font-medium text-muted-foreground">Display Name</Label>
               <Input
                 id="display-name"
@@ -78,7 +78,7 @@ export function ProfileSettingsModal({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">Email Address</Label>
               <div className="relative">
                 <Input
@@ -94,7 +94,7 @@ export function ProfileSettingsModal({
               </div>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label className="text-xs font-medium text-muted-foreground">Assigned Role</Label>
               <div className="flex gap-2">
                 {(user?.roles ?? ["Admin"]).map((role) => (

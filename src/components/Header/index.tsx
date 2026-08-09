@@ -6,14 +6,14 @@ import { Separator } from "@/components/ui/separator";
 
 export function Header() {
   return (
-    <header className="h-16 border-b border-zinc-800 flex items-center justify-end px-6 bg-[#09090b]/90 backdrop-blur-md shrink-0 z-30">
+    <header className="h-16 apple-glass-header flex items-center justify-end px-6 shrink-0 z-30 sticky top-0">
       {/* Header Right Actions */}
       <div className="flex items-center gap-3">
         {/* Notifications */}
         <NotificationsDropdown />
 
         {/* Vertical Separator */}
-        <Separator orientation="vertical" className="h-5 bg-zinc-800" />
+        <Separator orientation="vertical" className="h-5 bg-white/[0.08]" />
 
         {/* Profile Dropdown */}
         <ProfileDropdown />
@@ -21,3 +21,4 @@ export function Header() {
     </header>
   );
 }
+

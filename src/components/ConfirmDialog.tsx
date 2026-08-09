@@ -94,7 +94,7 @@ export function ConfirmDialog({
 
               {requireReason && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5 ml-0.5">
                     {reasonLabel}
                     <span className="text-rose-400 ml-0.5">*</span>
                   </label>

@@ -170,7 +170,7 @@ export default function UserDetailPage({
 
         <form onSubmit={handleReputation} className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">
+            <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-0.5">
               Points to adjust (positive or negative integer)
             </label>
             <input
@@ -184,7 +184,7 @@ export default function UserDetailPage({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Reason</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-0.5">Reason</label>
             <input
               type="text"
               value={repReason}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -19,10 +20,9 @@ interface UserGrowthChartProps {
 
 type TimeRange = "7D" | "30D" | "90D";
 
-// Helper to generate dynamic, realistic historical growth data anchored to totalUsersCount
 function generateGrowthData(range: TimeRange, totalUsers: number) {
   const points = range === "7D" ? 7 : range === "30D" ? 15 : 12;
-  const now = new Date(2026, 7, 4); // Aug 4, 2026
+  const now = new Date(2026, 7, 4);
   const data = [];
 
   let runningTotal = Math.max(1, totalUsers);
@@ -42,7 +42,6 @@ function generateGrowthData(range: TimeRange, totalUsers: number) {
       day: "numeric",
     });
 
-    // Calculate new signups for the day (going backwards)
     let newUsers = 0;
     if (i === 0) {
       newUsers = Math.max(0, Math.round((totalUsers / points) * 0.8));
@@ -50,7 +49,6 @@ function generateGrowthData(range: TimeRange, totalUsers: number) {
       newUsers = Math.max(0, Math.round((totalUsers / points) * (0.6 + Math.sin(i * 1.2) * 0.4)));
     }
     
-    // For small numbers like totalUsers = 3, ensure we don't drop below 0 runningTotal
     if (runningTotal - newUsers < 0) {
       newUsers = runningTotal;
     }
@@ -78,11 +76,10 @@ export function UserGrowthChart({ stats }: UserGrowthChartProps) {
     setMounted(true);
   }, []);
 
-  // Use real API data if available, otherwise fallback to the mock generator
   let chartData;
   if (stats?.userGrowth && stats.userGrowth.length > 0) {
     const maxPoints = timeRange === "7D" ? 7 : timeRange === "30D" ? 30 : 90;
-    const sliced = stats.userGrowth.slice(-maxPoints); // Take latest points
+    const sliced = stats.userGrowth.slice(-maxPoints);
     chartData = sliced.map(d => ({
       ...d,
       date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -95,67 +92,73 @@ export function UserGrowthChart({ stats }: UserGrowthChartProps) {
   const latestTotal = stats?.totalUsersCount || chartData[chartData.length - 1]?.totalUsers || 0;
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-[#121215] p-5 flex flex-col justify-between h-full min-h-[380px] relative">
+    <div className="apple-glass-card rounded-2xl p-5 flex flex-col justify-between h-full min-h-[380px] relative">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-400 shrink-0">
               <Users className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 tracking-tight">
                 User Growth
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
                   Total Registrations
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Platform user signup trajectory & verification</p>
+              <p className="text-xs text-zinc-400 mt-0.5 apple-body">Platform user signup trajectory & verification</p>
             </div>
           </div>
 
-          {/* Time range selector */}
-          <div className="flex items-center bg-zinc-900/90 border border-zinc-800 rounded-lg p-1 gap-1 relative z-20">
+          {/* Time range selector with Spring layoutId */}
+          <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-xl p-1 gap-0.5 relative z-20">
             {(["7D", "30D", "90D"] as TimeRange[]).map((range) => (
-              <button
+              <motion.button
                 key={range}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setTimeRange(range)}
-                className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-all ${
-                  timeRange === range
-                    ? "bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/60"
-                    : "text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800/40"
+                className={`relative px-2.5 py-1 text-[11px] font-semibold rounded-lg select-none transition-colors ${
+                  timeRange === range ? "text-zinc-100" : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
                 {range}
-              </button>
+                {timeRange === range && (
+                  <motion.div
+                    layoutId="growthTimeRangeTab"
+                    className="absolute inset-0 bg-white/[0.12] border border-white/[0.1] rounded-lg z-[-1]"
+                    transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                  />
+                )}
+              </motion.button>
             ))}
           </div>
         </div>
 
         {/* Quick Stats Banner */}
         <div className="grid grid-cols-2 gap-3 mb-4 pt-1">
-          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex items-center justify-between">
             <div>
-              <p className="text-[11px] text-zinc-400 font-medium">Total Registered</p>
-              <p className="text-lg font-bold text-zinc-100 tracking-tight mt-0.5">
+              <p className="text-[11px] text-zinc-400 font-medium apple-caption">Total Registered</p>
+              <p className="text-xl font-bold text-zinc-100 tracking-tight mt-0.5 tabular-nums apple-display-heading">
                 {latestTotal.toLocaleString()}
               </p>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
                 <TrendingUp className="w-3 h-3 inline" /> +12%
               </span>
             </div>
           </div>
 
-          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-lg p-2.5 flex items-center justify-between">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex items-center justify-between">
             <div>
-              <p className="text-[11px] text-zinc-400 font-medium">New ({timeRange})</p>
-              <p className="text-lg font-bold text-indigo-400 tracking-tight mt-0.5">
+              <p className="text-[11px] text-zinc-400 font-medium apple-caption">New ({timeRange})</p>
+              <p className="text-xl font-bold text-indigo-400 tracking-tight mt-0.5 tabular-nums apple-display-heading">
                 +{latestNewUsers}
               </p>
             </div>
-            <div className="flex items-center text-zinc-400 text-[11px]">
+            <div className="flex items-center text-zinc-400 text-[11px] apple-body">
               <UserCheck className="w-3.5 h-3.5 mr-1 text-emerald-400" />
               <span>72% Verified</span>
             </div>
@@ -166,7 +169,7 @@ export function UserGrowthChart({ stats }: UserGrowthChartProps) {
       {/* Chart container */}
       <div className="w-full h-56 mt-2">
         {!mounted ? (
-          <div className="w-full h-full flex items-center justify-center text-xs text-zinc-400">
+          <div className="w-full h-full flex items-center justify-center text-xs text-zinc-400 apple-body">
             Loading chart...
           </div>
         ) : (
@@ -174,23 +177,23 @@ export function UserGrowthChart({ stats }: UserGrowthChartProps) {
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="userGrowthGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.45} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient id="verifiedGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                   <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
 
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" vertical={false} />
               
               <XAxis
                 dataKey="date"
                 stroke="#71717a"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#27272a" }}
+                axisLine={{ stroke: "rgba(255, 255, 255, 0.08)" }}
               />
               
               <YAxis
@@ -206,8 +209,8 @@ export function UserGrowthChart({ stats }: UserGrowthChartProps) {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="rounded-lg border border-zinc-800 bg-zinc-950/95 p-3 shadow-xl backdrop-blur-md text-xs space-y-1.5 min-w-[140px]">
-                        <p className="font-semibold text-zinc-300 border-b border-zinc-800/80 pb-1">
+                      <div className="rounded-xl apple-glass-popover p-3 shadow-2xl text-xs space-y-1.5 min-w-[140px]">
+                        <p className="font-semibold text-zinc-200 border-b border-white/[0.08] pb-1 tracking-tight">
                           {label}
                         </p>
                         <div className="flex justify-between items-center text-zinc-300">
@@ -265,19 +268,20 @@ export function UserGrowthChart({ stats }: UserGrowthChartProps) {
       </div>
 
       {/* Legend Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-800/60 text-[11px] text-zinc-400">
+      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[11px] text-zinc-400">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />
-            <span className="text-zinc-300 font-medium">Total Registered Users</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block shadow-sm" />
+            <span className="text-zinc-300 font-medium tracking-tight">Total Registered Users</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-0.5 border-b border-dashed border-emerald-400 w-3 inline-block" />
-            <span className="text-zinc-400">Verified KYC</span>
+            <span className="text-zinc-400 apple-body">Verified KYC</span>
           </div>
         </div>
-        <span className="text-zinc-400">Updated today</span>
+        <span className="text-zinc-500 font-mono text-[10px]">Updated today</span>
       </div>
     </div>
   );
 }
+

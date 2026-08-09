@@ -264,7 +264,7 @@ export default function SetupPage() {
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-slate-300 mb-2 ml-0.5"
               >
                 Full Name
               </label>
@@ -284,7 +284,7 @@ export default function SetupPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-slate-300 mb-2 ml-0.5"
               >
                 Email Address
               </label>
@@ -304,7 +304,7 @@ export default function SetupPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-slate-300 mb-2 ml-0.5"
               >
                 Password
               </label>
@@ -357,7 +357,7 @@ export default function SetupPage() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-slate-300 mb-2 ml-0.5"
               >
                 Confirm Password
               </label>

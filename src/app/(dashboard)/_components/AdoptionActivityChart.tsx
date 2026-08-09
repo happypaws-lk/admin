@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -22,7 +23,7 @@ type TimeRange = "7D" | "30D" | "90D";
 
 function generateAdoptionData(range: TimeRange, activeListings: number) {
   const points = range === "7D" ? 7 : range === "30D" ? 15 : 12;
-  const now = new Date(2026, 7, 4); // Aug 4, 2026
+  const now = new Date(2026, 7, 4);
   const data = [];
 
   for (let i = points - 1; i >= 0; i--) {
@@ -40,8 +41,6 @@ function generateAdoptionData(range: TimeRange, activeListings: number) {
       day: "numeric",
     });
 
-    // Realistic applications & adoptions ratio
-    // Higher applications, subset converting to finalized daily adoptions
     const seedVal = (i % 3) * 2 + 3;
     const applications = Math.max(1, Math.round(seedVal + Math.sin(i * 1.5) * 3 + (activeListings > 0 ? 2 : 0)));
     const adoptions = Math.max(0, Math.min(applications, Math.round(applications * 0.45 + (i % 2 === 0 ? 1 : 0))));
@@ -83,94 +82,100 @@ export function AdoptionActivityChart({ stats }: AdoptionActivityChartProps) {
   const avgConversion = Math.round((totalAdoptions / (totalApplications || 1)) * 100);
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-[#121215] p-5 flex flex-col justify-between h-full min-h-[380px] relative">
+    <div className="apple-glass-card rounded-2xl p-5 flex flex-col justify-between h-full min-h-[380px] relative">
       {/* Header */}
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+            <div className="w-8 h-8 rounded-xl bg-sky-500/15 border border-sky-500/25 flex items-center justify-center text-sky-400 shrink-0">
               <HeartHandshake className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 tracking-tight">
                 Adoption Activity
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
                   Applications &amp; Daily Placements
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Submitted requests crossed with completed daily adoptions</p>
+              <p className="text-xs text-zinc-400 mt-0.5 apple-body">Submitted requests crossed with completed daily adoptions</p>
             </div>
           </div>
 
-          {/* Time range selector */}
-          <div className="flex items-center bg-zinc-900/90 border border-zinc-800 rounded-lg p-1 gap-1 relative z-20">
+          {/* Time range selector with Spring layoutId */}
+          <div className="flex items-center bg-black/40 border border-white/[0.08] rounded-xl p-1 gap-0.5 relative z-20">
             {(["7D", "30D", "90D"] as TimeRange[]).map((range) => (
-              <button
+              <motion.button
                 key={range}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setTimeRange(range)}
-                className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-all ${
-                  timeRange === range
-                    ? "bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/60"
-                    : "text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800/40"
+                className={`relative px-2.5 py-1 text-[11px] font-semibold rounded-lg select-none transition-colors ${
+                  timeRange === range ? "text-zinc-100" : "text-zinc-400 hover:text-zinc-200"
                 }`}
               >
                 {range}
-              </button>
+                {timeRange === range && (
+                  <motion.div
+                    layoutId="adoptionTimeRangeTab"
+                    className="absolute inset-0 bg-white/[0.12] border border-white/[0.1] rounded-lg z-[-1]"
+                    transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                  />
+                )}
+              </motion.button>
             ))}
           </div>
         </div>
 
         {/* Quick Stats Banner */}
         <div className="grid grid-cols-3 gap-2.5 mb-4 pt-1">
-          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-lg p-2.5">
-            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px]">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5">
+            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] apple-caption">
               <FileText className="w-3 h-3 text-sky-400" />
               <span>Applications</span>
             </div>
-            <p className="text-base font-bold text-sky-400 tracking-tight mt-0.5">
+            <p className="text-base font-bold text-sky-400 tracking-tight mt-0.5 tabular-nums apple-display-heading">
               {totalApplications}
             </p>
           </div>
 
-          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-lg p-2.5">
-            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px]">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5">
+            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] apple-caption">
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
               <span>Daily Placements</span>
             </div>
-            <p className="text-base font-bold text-emerald-400 tracking-tight mt-0.5">
+            <p className="text-base font-bold text-emerald-400 tracking-tight mt-0.5 tabular-nums apple-display-heading">
               {totalAdoptions}
             </p>
           </div>
 
-          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-lg p-2.5">
-            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px]">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2.5">
+            <div className="flex items-center gap-1.5 text-zinc-400 text-[11px] apple-caption">
               <Percent className="w-3 h-3 text-indigo-400" />
               <span>Match Rate</span>
             </div>
-            <p className="text-base font-bold text-indigo-400 tracking-tight mt-0.5">
+            <p className="text-base font-bold text-indigo-400 tracking-tight mt-0.5 tabular-nums apple-display-heading">
               {avgConversion}%
             </p>
           </div>
         </div>
       </div>
 
-      {/* Chart container (Crossed Bar + Line Chart) */}
+      {/* Chart container */}
       <div className="w-full h-56 mt-1">
         {!mounted ? (
-          <div className="w-full h-full flex items-center justify-center text-xs text-zinc-400">
+          <div className="w-full h-full flex items-center justify-center text-xs text-zinc-400 apple-body">
             Loading chart...
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" vertical={false} />
               
               <XAxis
                 dataKey="date"
                 stroke="#71717a"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#27272a" }}
+                axisLine={{ stroke: "rgba(255, 255, 255, 0.08)" }}
               />
               
               <YAxis
@@ -186,15 +191,15 @@ export function AdoptionActivityChart({ stats }: AdoptionActivityChartProps) {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="rounded-lg border border-zinc-800 bg-zinc-950/95 p-3 shadow-xl backdrop-blur-md text-xs space-y-1.5 min-w-[170px]">
-                        <p className="font-semibold text-zinc-300 border-b border-zinc-800/80 pb-1">
+                      <div className="rounded-xl apple-glass-popover p-3 shadow-2xl text-xs space-y-1.5 min-w-[170px]">
+                        <p className="font-semibold text-zinc-200 border-b border-white/[0.08] pb-1 tracking-tight">
                           {label}
                         </p>
                         
                         <div className="flex justify-between items-center text-zinc-300">
                           <span className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-sm bg-sky-400" />
-                            Applications Submitted:
+                            Applications:
                           </span>
                           <span className="font-mono font-bold text-sky-400">
                             {data.applications}
@@ -211,8 +216,8 @@ export function AdoptionActivityChart({ stats }: AdoptionActivityChartProps) {
                           </span>
                         </div>
 
-                        <div className="flex justify-between items-center text-zinc-400 pt-1 border-t border-zinc-800/60">
-                          <span>Daily Placement Rate:</span>
+                        <div className="flex justify-between items-center text-zinc-400 pt-1 border-t border-white/[0.08]">
+                          <span>Placement Rate:</span>
                           <span className="font-mono font-medium text-indigo-400">
                             {data.conversionRate}%
                           </span>
@@ -224,16 +229,14 @@ export function AdoptionActivityChart({ stats }: AdoptionActivityChartProps) {
                 }}
               />
 
-              {/* Chart Type 1: Bar Chart for Applications */}
               <Bar
                 dataKey="applications"
                 name="Applications Submitted"
                 fill="#38bdf8"
-                radius={[4, 4, 0, 0]}
+                radius={[6, 6, 0, 0]}
                 maxBarSize={24}
               />
 
-              {/* Chart Type 2: Line Chart crossed over for Daily Adoptions */}
               <Line
                 type="monotone"
                 dataKey="adoptions"
@@ -248,20 +251,21 @@ export function AdoptionActivityChart({ stats }: AdoptionActivityChartProps) {
         )}
       </div>
 
-      {/* Explicit Separate Legend & Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-800/60 text-[11px] text-zinc-400">
+      {/* Legend Footer */}
+      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06] text-[11px] text-zinc-400">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-sm bg-sky-400 inline-block shrink-0" />
-            <span className="text-zinc-300 font-medium">Applications Submitted (Bar)</span>
+            <span className="text-zinc-300 font-medium tracking-tight">Applications (Bar)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shrink-0 ring-2 ring-emerald-950" />
-            <span className="text-zinc-300 font-medium">Daily Adoptions (Line)</span>
+            <span className="text-zinc-300 font-medium tracking-tight">Daily Adoptions (Line)</span>
           </div>
         </div>
-        <span className="text-zinc-400">Live feed</span>
+        <span className="text-zinc-500 font-mono text-[10px]">Live feed</span>
       </div>
     </div>
   );
 }
+

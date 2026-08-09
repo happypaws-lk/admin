@@ -20,8 +20,10 @@ async function handler(req: NextRequest, ctx: Ctx): Promise<NextResponse> {
 
   let body: BodyInit | undefined;
   if (req.method !== "GET" && req.method !== "HEAD") {
-    const text = await req.text();
-    if (text) body = text;
+    // Read as ArrayBuffer to preserve binary data (e.g. multipart/form-data images)
+    // Using req.text() corrupts binary file uploads!
+    const buffer = await req.arrayBuffer();
+    if (buffer.byteLength > 0) body = buffer;
   }
 
   const upstream = await fetch(targetUrl, {

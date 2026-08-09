@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { apiClient, ApiError } from "@/lib/api";
 import type { UserProfileResponse } from "@/lib/types";
+import { getAvatarUrl } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,6 +62,7 @@ async function getCroppedBlob(imageSrc: string, pixelCrop: Area): Promise<Blob> 
 }
 
 export default function SettingsPage() {
+  const { refreshUser } = useAuth();
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
@@ -150,8 +153,12 @@ export default function SettingsPage() {
       );
       setProfile(updated);
       setName(updated.name);
+      if (updated.avatarUrl) {
+        setAvatarPreview(updated.avatarUrl);
+      }
       setCroppedBlob(null);
       setProfileSuccess(true);
+      await refreshUser();
       setTimeout(() => setProfileSuccess(false), 3000);
     } catch (err) {
       setProfileError(
@@ -313,9 +320,9 @@ export default function SettingsPage() {
             <div className="flex items-center gap-5 p-4 rounded-xl bg-zinc-900/70 border border-zinc-800">
               <div className="relative group">
                 <Avatar className="w-20 h-20 border-2 border-indigo-500/40 shadow-md">
-                  {avatarPreview && (
-                    <AvatarImage src={avatarPreview} alt={displayName} className="object-cover" />
-                  )}
+                  {avatarPreview ? (
+                    <AvatarImage src={getAvatarUrl(avatarPreview)} alt={displayName} className="object-cover" />
+                  ) : null}
                   <AvatarFallback className="text-xl font-bold bg-zinc-800 text-zinc-100">
                     {getInitials(displayName)}
                   </AvatarFallback>
@@ -369,7 +376,7 @@ export default function SettingsPage() {
             </div>
 
             {/* ── Name ── */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="admin-name" className="text-xs font-semibold text-zinc-300">
                 Full Name
               </Label>
@@ -384,7 +391,7 @@ export default function SettingsPage() {
             </div>
 
             {/* ── Email (read-only) ── */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="admin-email" className="text-xs font-semibold text-zinc-300">
                 Email Address
               </Label>
@@ -447,7 +454,7 @@ export default function SettingsPage() {
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="current-pass" className="text-xs font-semibold text-zinc-300">
                 Current Password
               </Label>
@@ -460,7 +467,7 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="new-pass" className="text-xs font-semibold text-zinc-300">
                 New Password
               </Label>
@@ -473,7 +480,7 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="confirm-pass" className="text-xs font-semibold text-zinc-300">
                 Confirm New Password
               </Label>
