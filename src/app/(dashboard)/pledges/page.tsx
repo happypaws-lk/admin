@@ -96,7 +96,7 @@ export default function PledgesPage() {
         <p className="text-slate-400 mt-1 text-sm">Overview of sponsor pledges</p>
       </div>
 
-      {error && (
+      {error && error !== "Not Found" && (
         <p className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3">
           {error}
         </p>

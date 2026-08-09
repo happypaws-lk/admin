@@ -1,12 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { apiClient } from "@/lib/api";
 import type { AdminUserResponse, PagedResult } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
 import { Pagination } from "@/components/Pagination";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { UserInfoModal } from "./_components/UserInfoModal";
+import { MoreVertical, ShieldCheck } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -26,11 +32,7 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [confirmAction, setConfirmAction] = useState<{
-    userId: string;
-    email: string;
-    action: "suspend" | "unsuspend";
-  } | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -58,17 +60,18 @@ export default function UsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleSuspendAction = async (reason: string | undefined) => {
-    if (!confirmAction) return;
-    if (confirmAction.action === "suspend") {
-      await apiClient.put(`/api/v1/admin/users/${confirmAction.userId}/suspend`, {
-        reason: reason ?? "",
-      });
-    } else {
-      await apiClient.put(`/api/v1/admin/users/${confirmAction.userId}/unsuspend`);
+  const parseDate = (dateStr?: string | null) => {
+    if (!dateStr) return "—";
+    try {
+      const formatted = dateStr.includes("T")
+        ? dateStr
+        : dateStr.replace(" ", "T").replace(" +", "+");
+      const d = new Date(formatted);
+      return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+    } catch {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
     }
-    setConfirmAction(null);
-    fetchUsers();
   };
 
   const columns: Column<AdminUserResponse>[] = [
@@ -76,12 +79,9 @@ export default function UsersPage() {
       key: "email",
       header: "Email",
       render: (row) => (
-        <Link
-          href={`/users/${row.id}`}
-          className="text-[#818cf8] hover:text-indigo-300 font-medium transition-colors"
-        >
+        <span className="text-[#818cf8] font-medium transition-colors">
           {row.email}
-        </Link>
+        </span>
       ),
     },
     {
@@ -94,6 +94,8 @@ export default function UsersPage() {
     {
       key: "reputationPoints",
       header: "Reputation",
+      className: "hidden md:table-cell",
+      headerClassName: "hidden md:table-cell",
       render: (row) => (
         <span className="tabular-nums text-slate-300">{row.reputationPoints ?? 0}</span>
       ),
@@ -102,16 +104,26 @@ export default function UsersPage() {
     {
       key: "isVerified",
       header: "Verified",
-      render: (row) => (
-        <span className={row.isVerified ? "text-emerald-400 text-xs" : "text-slate-500 text-xs"}>
-          {row.isVerified ? "Yes" : "No"}
-        </span>
-      ),
-      width: "80px",
+      className: "hidden md:table-cell",
+      headerClassName: "hidden md:table-cell",
+      render: (row) =>
+        row.isVerified ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Verified
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800/50 text-zinc-400 border border-zinc-700/40">
+            Unverified
+          </span>
+        ),
+      width: "110px",
     },
     {
       key: "isSuspended",
       header: "Status",
+      className: "hidden md:table-cell",
+      headerClassName: "hidden md:table-cell",
       render: (row) => (
         <span
           className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${
@@ -125,46 +137,80 @@ export default function UsersPage() {
       ),
       width: "100px",
     },
-    {
-      key: "createdAt",
-      header: "Joined",
-      render: (row) => (
-        <span className="text-slate-400 text-xs">
-          {new Date(row.createdAt).toLocaleDateString()}
-        </span>
-      ),
-      width: "110px",
-    },
+
     {
       key: "actions",
       header: "",
+      width: "48px",
       render: (row) => (
-        <div className="flex items-center gap-2 justify-end">
-          <Link
-            href={`/users/${row.id}`}
-            className="text-xs text-slate-400 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
-          >
-            View
-          </Link>
-          <button
-            onClick={() =>
-              setConfirmAction({
-                userId: row.id,
-                email: row.email,
-                action: row.isSuspended ? "unsuspend" : "suspend",
-              })
-            }
-            className={`text-xs px-2 py-1 rounded-lg transition-colors ${
-              row.isSuspended
-                ? "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
-                : "text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
-            }`}
-          >
-            {row.isSuspended ? "Unsuspend" : "Suspend"}
-          </button>
+        <div
+          className="flex items-center justify-end"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-colors focus:outline-none"
+                aria-label="User actions"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-64 px-4 py-4 space-y-4 apple-glass-popover rounded-xl shadow-2xl"
+            >
+              <div className="space-y-3 text-xs border-b border-white/10 pb-4">
+                <div className="flex justify-between items-center text-zinc-400">
+                  <span className="font-medium">Reputation</span>
+                  <span className="tabular-nums font-semibold text-zinc-200">
+                    {row.reputationPoints ?? 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-zinc-400">
+                  <span className="font-medium">Verified</span>
+                  {row.isVerified ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Verified
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800/50 text-zinc-400 border border-zinc-700/40">
+                      Unverified
+                    </span>
+                  )}
+                </div>
+                <div className="flex justify-between items-center text-zinc-400">
+                  <span className="font-medium">Status</span>
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${
+                      row.isSuspended
+                        ? "bg-rose-500/15 text-rose-400 border-rose-500/25"
+                        : "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
+                    }`}
+                  >
+                    {row.isSuspended ? "Suspended" : "Active"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-zinc-400">
+                  <span className="font-medium">Joined</span>
+                  <span className="text-zinc-300 font-medium">
+                    {parseDate(row.createdAt)}
+                  </span>
+                </div>
+              </div>
+
+              <DropdownMenuItem
+                onClick={() => setSelectedUserId(row.id)}
+                className="w-full cursor-pointer justify-center font-semibold bg-white/[0.08] hover:bg-white/[0.16] text-white rounded-lg py-2.5 text-xs transition-all border border-white/10 shadow-sm focus:bg-white/[0.16] focus:text-white"
+              >
+                Manage
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
-      width: "140px",
     },
   ];
 
@@ -237,6 +283,7 @@ export default function UsersPage() {
         isLoading={isLoading}
         keyExtractor={(row) => row.id}
         emptyMessage="No users found matching your filters."
+        onRowClick={(row) => setSelectedUserId(row.id)}
       />
 
       {data && (
@@ -251,24 +298,16 @@ export default function UsersPage() {
         />
       )}
 
-      <ConfirmDialog
-        isOpen={!!confirmAction}
-        title={
-          confirmAction?.action === "suspend"
-            ? `Suspend ${confirmAction?.email}?`
-            : `Unsuspend ${confirmAction?.email}?`
-        }
-        description={
-          confirmAction?.action === "suspend"
-            ? "The user will lose access to the platform immediately."
-            : "The user will regain full platform access."
-        }
-        destructive={confirmAction?.action === "suspend"}
-        confirmLabel={confirmAction?.action === "suspend" ? "Suspend User" : "Unsuspend User"}
-        requireReason={confirmAction?.action === "suspend"}
-        reasonLabel="Reason for suspension"
-        onConfirm={handleSuspendAction}
-        onCancel={() => setConfirmAction(null)}
+      <UserInfoModal
+        userId={selectedUserId}
+        isOpen={!!selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+        onUserDeleted={() => {
+          fetchUsers();
+        }}
+        onUserSuspended={() => {
+          fetchUsers();
+        }}
       />
     </div>
   );

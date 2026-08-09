@@ -11,21 +11,23 @@ interface NavItemProps {
   icon: React.ReactNode;
   badge?: string | number;
   badgeVariant?: "green" | "neutral" | "amber";
+  onClick?: () => void;
 }
 
 const MotionLink = motion.create(Link);
 
-export function NavItem({ href, label, icon, badge, badgeVariant = "neutral" }: NavItemProps) {
+export function NavItem({ href, label, icon, badge, badgeVariant = "neutral", onClick }: NavItemProps) {
   const pathname = usePathname();
   const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <MotionLink
       href={href}
+      onClick={onClick}
       whileTap={{ scale: 0.97 }}
       transition={{ type: "spring", bounce: 0, duration: 0.2 }}
       className={cn(
-        "group relative flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium select-none transition-colors duration-150",
+        "group relative flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium select-none transition-colors duration-150",
         isActive
           ? "text-white"
           : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]"
@@ -35,7 +37,7 @@ export function NavItem({ href, label, icon, badge, badgeVariant = "neutral" }: 
       {isActive && (
         <motion.div
           layoutId="activeSidebarPill"
-          className="absolute inset-0 bg-white/[0.08] border border-white/[0.1] rounded-xl shadow-sm z-0"
+          className="absolute inset-0 bg-white/[0.08] border border-white/[0.1] rounded-lg shadow-sm z-0"
           transition={{
             type: "spring",
             bounce: 0,

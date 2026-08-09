@@ -3,11 +3,15 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+
 export interface Column<T> {
   key: string;
   header: string;
   render?: (row: T) => ReactNode;
   width?: string;
+  className?: string;
+  headerClassName?: string;
 }
 
 interface DataTableProps<T> {
@@ -17,6 +21,7 @@ interface DataTableProps<T> {
   skeletonRows?: number;
   keyExtractor: (row: T) => string;
   emptyMessage?: string;
+  onRowClick?: (row: T) => void;
 }
 
 export function DataTable<T>({
@@ -26,6 +31,7 @@ export function DataTable<T>({
   skeletonRows = 6,
   keyExtractor,
   emptyMessage = "No results found.",
+  onRowClick,
 }: DataTableProps<T>) {
   return (
     <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-[#121215] shadow-sm">
@@ -35,7 +41,10 @@ export function DataTable<T>({
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                className={cn(
+                  "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400",
+                  col.headerClassName ?? col.className
+                )}
                 style={col.width ? { width: col.width } : undefined}
               >
                 {col.header}
@@ -48,7 +57,7 @@ export function DataTable<T>({
             ? Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={i} className="border-b border-zinc-800/60">
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3.5">
+                    <td key={col.key} className={cn("px-4 py-3.5", col.className)}>
                       <div
                         className="h-3.5 rounded-md bg-zinc-800 animate-pulse"
                         style={{ width: col.width ?? "75%" }}
@@ -74,12 +83,13 @@ export function DataTable<T>({
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02, duration: 0.15 }}
-                    className="border-b border-zinc-800/60 hover:bg-zinc-800/40 transition-colors"
+                    onClick={() => onRowClick?.(row)}
+                    className={`border-b border-zinc-800/60 hover:bg-zinc-800/40 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
                   >
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className="px-4 py-3 text-zinc-200 align-middle"
+                        className={cn("px-4 py-3 text-zinc-200 align-middle", col.className)}
                       >
                         {col.render
                           ? col.render(row)

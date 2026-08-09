@@ -5,19 +5,10 @@ import { apiClient } from "@/lib/api";
 import type {
   ModerationLogResponse,
   PagedResult,
-  ModerationTargetType,
-  ModerationActionType,
 } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
 import { Pagination } from "@/components/Pagination";
 import { StatusBadge } from "@/components/StatusBadge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const PAGE_SIZE = 20;
 
@@ -26,14 +17,6 @@ export default function ModerationPage() {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [targetType, setTargetType] = useState<ModerationTargetType | "">("");
-  const [targetId, setTargetId] = useState("");
-  const [actionType, setActionType] = useState<ModerationActionType | "">("");
-  const [reason, setReason] = useState("");
-  const [formPending, setFormPending] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState(false);
 
   const fetchLog = useCallback(async () => {
     setIsLoading(true);
@@ -54,32 +37,6 @@ export default function ModerationPage() {
   useEffect(() => {
     fetchLog();
   }, [fetchLog]);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (targetType === "" || actionType === "") return;
-    setFormPending(true);
-    setFormError(null);
-    try {
-      await apiClient.post("/api/v1/admin/moderation", {
-        targetType,
-        targetId: targetId.trim(),
-        actionType,
-        reason: reason.trim(),
-      });
-      setFormSuccess(true);
-      setTargetType("");
-      setTargetId("");
-      setActionType("");
-      setReason("");
-      fetchLog();
-      setTimeout(() => setFormSuccess(false), 3000);
-    } catch (e) {
-      setFormError(e instanceof Error ? e.message : "Failed to create moderation action.");
-    } finally {
-      setFormPending(false);
-    }
-  };
 
   const columns: Column<ModerationLogResponse>[] = [
     {
@@ -128,80 +85,7 @@ export default function ModerationPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Moderation</h1>
-        <p className="text-slate-400 mt-1 text-sm">Create moderation actions and review the audit log</p>
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-white">Create Moderation Action</h2>
-
-        {formSuccess && (
-          <p className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-            Moderation action created successfully.
-          </p>
-        )}
-        {formError && (
-          <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
-            {formError}
-          </p>
-        )}
-
-        <form onSubmit={handleCreate} className="grid grid-cols-2 gap-3">
-          <Select
-            value={targetType === "" ? "EMPTY" : String(targetType)}
-            onValueChange={(val) => setTargetType(val === "EMPTY" ? "" : (Number(val) as ModerationTargetType))}
-          >
-            <SelectTrigger className="col-span-1">
-              <SelectValue placeholder="Target type…" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="EMPTY">Target type…</SelectItem>
-              <SelectItem value="0">Listing</SelectItem>
-              <SelectItem value="1">Message</SelectItem>
-              <SelectItem value="2">User</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={actionType === "" ? "EMPTY" : String(actionType)}
-            onValueChange={(val) => setActionType(val === "EMPTY" ? "" : (Number(val) as ModerationActionType))}
-          >
-            <SelectTrigger className="col-span-1">
-              <SelectValue placeholder="Action type…" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="EMPTY">Action type…</SelectItem>
-              <SelectItem value="0">Remove</SelectItem>
-              <SelectItem value="1">Suspend</SelectItem>
-              <SelectItem value="2">Warn</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <input
-            type="text"
-            value={targetId}
-            onChange={(e) => setTargetId(e.target.value)}
-            placeholder="Target ID (UUID)"
-            required
-            className="col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all font-mono placeholder:font-sans placeholder:text-slate-600"
-          />
-
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason for this action…"
-            rows={2}
-            required
-            className="col-span-2 px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-white/10 text-white text-sm focus:outline-none focus:border-[#5b50e6] transition-all resize-none placeholder:text-slate-600"
-          />
-
-          <button
-            type="submit"
-            disabled={formPending || targetType === "" || actionType === "" || !targetId.trim() || !reason.trim()}
-            className="col-span-2 px-5 py-2 rounded-xl text-xs font-semibold bg-[#5b50e6] hover:bg-[#4d42df] text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all w-fit"
-          >
-            {formPending ? "Submitting…" : "Create Action"}
-          </button>
-        </form>
+        <p className="text-slate-400 mt-1 text-sm">Review the audit log</p>
       </div>
 
       {error && (
