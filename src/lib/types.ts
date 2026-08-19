@@ -90,7 +90,7 @@ export interface PagedResult<T> {
 
 // ─── Enums (integer values matching C# ordinals) ─────────────────────────────
 
-export const CaseStatus = { Open: 0, InProgress: 1, Resolved: 2 } as const;
+export const CaseStatus = { Open: 0, InProgress: 1, Resolved: 2, PendingApproval: 3 } as const;
 export type CaseStatus = (typeof CaseStatus)[keyof typeof CaseStatus];
 
 export const Urgency = { Low: 0, Moderate: 1, Critical: 2 } as const;
@@ -151,6 +151,7 @@ export const CASE_STATUS_LABELS: Record<number, string> = {
   0: "Open",
   1: "In Progress",
   2: "Resolved",
+  3: "Pending Approval",
 };
 
 export const URGENCY_LABELS: Record<number, string> = {
@@ -250,10 +251,7 @@ export interface DashboardResponse {
   adoptionActivity?: DashboardAdoptionActivity[];
 }
 
-/** Frontend-augmented version with activeListingsCount added client-side. */
-export interface DashboardStatsResponse extends DashboardResponse {
-  activeListingsCount?: number;
-}
+export type DashboardStatsResponse = DashboardResponse;
 
 // ─── Admin Users ──────────────────────────────────────────────────────────────
 
@@ -477,6 +475,70 @@ export interface NotificationResponse {
 export interface UnreadCountResponse {
   count: number;
 }
+
+// ─── Pledges ─────────────────────────────────────────────────────────────────
+
+// ─── Community Posts ─────────────────────────────────────────────────────────
+
+export type CommunityContentType = "ADOPTION_LISTING" | "RESCUE_REPORT" | "TRANSPORT_REQUEST" | "COMMUNITY_STORY";
+
+export interface CommunityPostResponse {
+  id: string;
+  contentType: CommunityContentType;
+  title: string;
+  description: string;
+  photoUrl: string | null;
+  tags: string[];
+  authorName: string;
+  authorId: string;
+  createdAt: string;
+  status: "Pending" | "Approved";
+}
+
+export interface CommunityPostDetailResponse {
+  id: string;
+  contentType: CommunityContentType;
+  title: string;
+  description: string;
+  photoUrl: string | null;
+  videoUrl: string | null;
+  photos: string[] | null;
+  tags: string[];
+  authorName: string;
+  authorId: string;
+  locationName: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  urgency: string | null;
+  urgencySource: string | null;
+  originalAiUrgency: string | null;
+  status: string;
+  conditionNotes: string | null;
+  animalName: string | null;
+  species: string | null;
+  breed: string | null;
+  ageMonths: number | null;
+  ageLabel: string | null;
+  gender: string | null;
+  size: string | null;
+  dropoffLocation: string | null;
+  dropoffLatitude: number | null;
+  dropoffLongitude: number | null;
+  pickupContactName: string | null;
+  dropoffContactName: string | null;
+  pickupTimeStart: string | null;
+  pickupTimeEnd: string | null;
+  activityLevel: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const CONTENT_TYPE_LABELS: Record<string, string> = {
+  ADOPTION_LISTING: "Adoption Listing",
+  RESCUE_REPORT: "Emergency Rescue",
+  TRANSPORT_REQUEST: "Transport Request",
+  COMMUNITY_STORY: "Community Story",
+};
 
 // ─── Pledges ─────────────────────────────────────────────────────────────────
 

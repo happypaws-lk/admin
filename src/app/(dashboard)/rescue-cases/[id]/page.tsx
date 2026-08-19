@@ -111,6 +111,18 @@ export default function RescueCaseDetailPage({
     }
   };
 
+  const handleApproveCase = async () => {
+    setResolvePending(true);
+    try {
+      await apiClient.post(`/api/v1/admin/cases/${id}/approve`, {});
+      fetchCase();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setResolvePending(false);
+    }
+  };
+
   const handleResolve = async () => {
     setResolvePending(true);
     try {
@@ -163,14 +175,25 @@ export default function RescueCaseDetailPage({
           </div>
         </div>
 
-        {!isResolved && (
-          <button
-            onClick={() => setResolveDialog(true)}
-            className="text-xs px-4 py-2 rounded-xl font-semibold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition-colors shrink-0"
-          >
-            Mark Resolved
-          </button>
-        )}
+        <div className="flex gap-2">
+          {caseData.status === 3 && (
+            <button
+              onClick={handleApproveCase}
+              className="text-xs px-4 py-2 rounded-xl font-semibold bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30 transition-colors shrink-0"
+            >
+              {resolvePending ? "Approving..." : "Approve Case"}
+            </button>
+          )}
+
+          {!isResolved && (
+            <button
+              onClick={() => setResolveDialog(true)}
+              className="text-xs px-4 py-2 rounded-xl font-semibold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition-colors shrink-0"
+            >
+              Mark Resolved
+            </button>
+          )}
+        </div>
       </div>
 
       {caseData.photoUrl && (

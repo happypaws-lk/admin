@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Heart, BadgeCheck, Users, ArrowRight, CheckCircle2, Tag } from "lucide-react";
+import { Heart, BadgeCheck, Users, ArrowRight, CheckCircle2 } from "lucide-react";
 import type { DashboardStatsResponse } from "@/lib/types";
 import { UserGrowthChart } from "./UserGrowthChart";
 import { AdoptionActivityChart } from "./AdoptionActivityChart";
@@ -33,7 +33,6 @@ export function DashboardClient({ stats }: Props) {
     pendingKycCount,
     openRescueCasesCount,
     totalUsersCount,
-    activeListingsCount = 0,
   } = stats;
 
   return (
@@ -194,7 +193,7 @@ export function DashboardClient({ stats }: Props) {
           transition={{ delay: 0.15, type: "spring", bounce: 0, duration: 0.35 }}
           className="h-full"
         >
-          <Link href="/listings" className="group block h-full focus:outline-none">
+          <Link href="/community" className="group block h-full focus:outline-none">
             <motion.div
               whileHover={{ y: -2, scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
@@ -205,31 +204,19 @@ export function DashboardClient({ stats }: Props) {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0 shadow-inner">
-                      <Tag className="w-4 h-4 text-zinc-300" />
+                      <Users className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <span className="text-xs font-semibold text-zinc-400 truncate tracking-tight">Adoption listings</span>
+                    <span className="text-xs font-semibold text-zinc-400 truncate tracking-tight">Community</span>
                   </div>
-                  {activeListingsCount > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-0.5 shrink-0">
-                      Active
-                    </span>
-                  )}
                 </div>
 
-                {activeListingsCount === 0 ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <CheckCircle2 className="w-4 h-4 text-zinc-500 shrink-0" />
-                    <span className="text-sm font-medium text-zinc-400 apple-body">No active listings</span>
-                  </div>
-                ) : (
-                  <p className="text-3xl font-bold text-zinc-100 tabular-nums apple-display-heading">
-                    {activeListingsCount.toLocaleString()}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm font-medium text-zinc-400 apple-body">Coming soon</span>
+                </div>
               </div>
 
               <p className="text-xs text-zinc-500 mt-4 flex items-center gap-1.5 group-hover:text-zinc-300 transition-colors apple-body">
-                Manage listings <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                Manage community <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </p>
             </motion.div>
           </Link>

@@ -29,46 +29,52 @@ function caseStatusConfig(value: string | number): { label: string; color: Color
   return { label: "Resolved", color: "green" };
 }
 
-// ─── DocumentType (integer 0-2) ───────────────────────────────────────────────
+// ─── DocumentType (integer 0-2 or string) ────────────────────────────────────
 function documentTypeConfig(value: string | number): { label: string; color: Color } {
-  if (value === 0) return { label: "NIC", color: "indigo" };
-  if (value === 1) return { label: "License", color: "cyan" };
+  const v = typeof value === "string" ? value.toLowerCase() : value;
+  if (v === 0 || v === "nic") return { label: "NIC", color: "indigo" };
+  if (v === 1 || v === "license") return { label: "License", color: "cyan" };
   return { label: "Clinic Reg.", color: "purple" };
 }
 
-// ─── DocumentStatus (integer 0-2) ─────────────────────────────────────────────
+// ─── DocumentStatus (integer 0-2 or string) ──────────────────────────────────
 function documentStatusConfig(value: string | number): { label: string; color: Color } {
-  if (value === 0) return { label: "Pending", color: "amber" };
-  if (value === 1) return { label: "Approved", color: "green" };
+  const v = typeof value === "string" ? value.toLowerCase() : value;
+  if (v === 0 || v === "pending") return { label: "Pending", color: "amber" };
+  if (v === 1 || v === "approved") return { label: "Approved", color: "green" };
   return { label: "Rejected", color: "red" };
 }
 
-// ─── ListingStatus (integer 0-2) ─────────────────────────────────────────────
+// ─── ListingStatus (integer 0-2 or string) ───────────────────────────────────
 function listingStatusConfig(value: string | number): { label: string; color: Color } {
-  if (value === 0) return { label: "Available", color: "green" };
-  if (value === 1) return { label: "Pending", color: "amber" };
+  const v = typeof value === "string" ? value.toLowerCase() : value;
+  if (v === 0 || v === "available") return { label: "Available", color: "green" };
+  if (v === 1 || v === "pending") return { label: "Pending", color: "amber" };
   return { label: "Adopted", color: "slate" };
 }
 
-// ─── ApplicationStatus (integer 0-2) ─────────────────────────────────────────
+// ─── ApplicationStatus (integer 0-2 or string) ───────────────────────────────
 function applicationStatusConfig(value: string | number): { label: string; color: Color } {
-  if (value === 0) return { label: "Pending", color: "amber" };
-  if (value === 1) return { label: "Accepted", color: "green" };
+  const v = typeof value === "string" ? value.toLowerCase() : value;
+  if (v === 0 || v === "pending") return { label: "Pending", color: "amber" };
+  if (v === 1 || v === "accepted") return { label: "Accepted", color: "green" };
   return { label: "Declined", color: "red" };
 }
 
-// ─── TransportStatus (integer 0-4) ───────────────────────────────────────────
+// ─── TransportStatus (integer 0-4 or string) ─────────────────────────────────
 function transportStatusConfig(value: string | number): { label: string; color: Color } {
-  if (value === 0) return { label: "Pending", color: "slate" };
-  if (value === 1) return { label: "Assigned", color: "blue" };
-  if (value === 2) return { label: "Picked Up", color: "amber" };
-  if (value === 3) return { label: "In Transit", color: "purple" };
+  const v = typeof value === "string" ? value.toLowerCase() : value;
+  if (v === 0 || v === "pending") return { label: "Pending", color: "slate" };
+  if (v === 1 || v === "assigned") return { label: "Assigned", color: "blue" };
+  if (v === 2 || v === "pickedup" || v === "picked up") return { label: "Picked Up", color: "amber" };
+  if (v === 3 || v === "intransit" || v === "in transit") return { label: "In Transit", color: "purple" };
   return { label: "Delivered", color: "green" };
 }
 
-// ─── PledgeStatus (integer 0-1) ──────────────────────────────────────────────
+// ─── PledgeStatus (integer 0-1 or string) ────────────────────────────────────
 function pledgeStatusConfig(value: string | number): { label: string; color: Color } {
-  if (value === 0) return { label: "Pledged", color: "amber" };
+  const v = typeof value === "string" ? value.toLowerCase() : value;
+  if (v === 0 || v === "pledged") return { label: "Pledged", color: "amber" };
   return { label: "Confirmed", color: "green" };
 }
 
@@ -95,6 +101,16 @@ function updateTypeConfig(value: string | number): { label: string; color: Color
   return { label: "Note", color: "slate" };
 }
 
+// ─── ContentType (string) ─────────────────────────────────────────────────────
+function contentTypeConfig(value: string | number): { label: string; color: Color } {
+  const v = typeof value === "string" ? value : "";
+  if (v === "ADOPTION_LISTING") return { label: "Adoption", color: "green" };
+  if (v === "RESCUE_REPORT") return { label: "Rescue", color: "red" };
+  if (v === "TRANSPORT_REQUEST") return { label: "Transport", color: "blue" };
+  if (v === "COMMUNITY_STORY") return { label: "Story", color: "purple" };
+  return { label: v, color: "slate" };
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export type StatusBadgeVariant =
@@ -108,7 +124,8 @@ export type StatusBadgeVariant =
   | "pledgeStatus"
   | "moderationAction"
   | "urgencySource"
-  | "updateType";
+  | "updateType"
+  | "contentType";
 
 interface StatusBadgeProps {
   variant: StatusBadgeVariant;
@@ -143,6 +160,7 @@ function resolve(
     case "moderationAction": return moderationActionConfig(value);
     case "urgencySource": return urgencySourceConfig(value);
     case "updateType": return updateTypeConfig(value);
+    case "contentType": return contentTypeConfig(value);
     default: return { label: String(value), color: "slate" };
   }
 }

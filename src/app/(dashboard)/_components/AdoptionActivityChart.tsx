@@ -74,7 +74,7 @@ export function AdoptionActivityChart({ stats }: AdoptionActivityChartProps) {
       conversionRate: Math.round((d.adoptions / (d.applications || 1)) * 100),
     }));
   } else {
-    chartData = generateAdoptionData(timeRange, stats?.activeListingsCount || 0);
+    chartData = generateAdoptionData(timeRange, 0);
   }
 
   const totalApplications = chartData.reduce((acc, curr) => acc + curr.applications, 0);

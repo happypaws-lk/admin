@@ -11,6 +11,7 @@ import {
   Camera,
   ImageIcon,
   Loader2,
+  Trash2,
   X,
   ZoomIn,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { apiClient, ApiError } from "@/lib/api";
 import type { UserProfileResponse } from "@/lib/types";
 import { getAvatarUrl } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,6 +76,7 @@ export default function SettingsPage() {
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -135,6 +138,30 @@ export default function SettingsPage() {
   const handleCancelCrop = () => {
     setCropModalOpen(false);
     setRawImageSrc(null);
+  };
+
+  const handleDeleteAvatar = async () => {
+    setProfileError(null);
+    try {
+      if (profile?.avatarUrl) {
+        await apiClient.delete("/api/v1/users/me/avatar");
+        setProfile((prev) => (prev ? { ...prev, avatarUrl: null } : null));
+        setAvatarPreview(null);
+        setCroppedBlob(null);
+        setProfileSuccess(true);
+        await refreshUser();
+        setTimeout(() => setProfileSuccess(false), 3000);
+      } else {
+        setCroppedBlob(null);
+        setAvatarPreview(null);
+      }
+    } catch (err) {
+      setProfileError(
+        err instanceof ApiError ? err.title : "Failed to remove avatar.",
+      );
+    } finally {
+      setDeleteConfirmOpen(false);
+    }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -327,14 +354,27 @@ export default function SettingsPage() {
                     {getInitials(displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                  title="Change Avatar"
-                >
-                  <Camera className="w-5 h-5" />
-                </button>
+                {avatarPreview ? (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                    className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-rose-400 hover:text-rose-300 cursor-pointer"
+                    title="Remove Photo"
+                    aria-label="Remove Photo"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white cursor-pointer"
+                    title="Upload Photo"
+                    aria-label="Upload Photo"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -511,6 +551,18 @@ export default function SettingsPage() {
           </CardFooter>
         </form>
       </Card>
+
+      {/* ── Remove Avatar Confirmation Modal ── */}
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        title="Remove Profile Photo"
+        description="Are you sure you want to remove your profile photo? Your avatar will revert to your name initials."
+        confirmLabel="Remove Photo"
+        cancelLabel="Cancel"
+        destructive
+        onConfirm={handleDeleteAvatar}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </div>
   );
 }

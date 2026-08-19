@@ -10,7 +10,7 @@ import {
   LayoutDashboard,
   Users,
   Heart,
-  FileText,
+  UserCog,
   BadgeCheck,
   Shield,
   Truck,
@@ -22,9 +22,9 @@ const DASHBOARD_ITEMS = [
 ];
 
 const MANAGEMENT_ITEMS = [
-  { href: "/users", label: "User Management", icon: <Users className="w-4 h-4" /> },
+  { href: "/users", label: "User Management", icon: <UserCog className="w-4 h-4" /> },
   { href: "/rescue-cases", label: "Rescue Cases", icon: <Heart className="w-4 h-4" />, badge: "Live", badgeVariant: "green" as const },
-  { href: "/listings", label: "Pet Listings", icon: <FileText className="w-4 h-4" /> },
+  { href: "/community", label: "Community", icon: <Users className="w-4 h-4" /> },
   { href: "/kyc", label: "KYC Review Queue", icon: <BadgeCheck className="w-4 h-4" />, badge: "Review", badgeVariant: "amber" as const },
 ];
 

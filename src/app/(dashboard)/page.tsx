@@ -20,24 +20,11 @@ async function fetchStats(): Promise<DashboardStatsResponse | null> {
   const endDateIso = endDate.toISOString().split("T")[0];
 
   try {
-    const [dashboardRes, listingsRes] = await Promise.allSettled([
-      fetch(`${API_BASE_URL}/api/v1/admin/dashboard?startDate=${startDateIso}&endDate=${endDateIso}`, { headers, cache: "no-store" }),
-      fetch(`${API_BASE_URL}/api/v1/admin/listings?status=0&pageSize=1`, { headers, cache: "no-store" }),
-    ]);
+    const dashboardRes = await fetch(`${API_BASE_URL}/api/v1/admin/dashboard?startDate=${startDateIso}&endDate=${endDateIso}`, { headers, cache: "no-store" });
 
     let stats: DashboardStatsResponse | null = null;
-    if (dashboardRes.status === "fulfilled" && dashboardRes.value.ok) {
-      stats = await dashboardRes.value.json();
-    }
-
-    let activeListingsCount = 0;
-    if (listingsRes.status === "fulfilled" && listingsRes.value.ok) {
-      const listingsData = await listingsRes.value.json();
-      activeListingsCount = listingsData.totalCount ?? listingsData.items?.length ?? 0;
-    }
-
-    if (stats) {
-      stats.activeListingsCount = activeListingsCount;
+    if (dashboardRes.ok) {
+      stats = await dashboardRes.json();
     }
 
     return stats;

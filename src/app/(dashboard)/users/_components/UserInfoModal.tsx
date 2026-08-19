@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { apiClient } from "@/lib/api";
 import type { AdminUserDetailResponse } from "@/lib/types";
-import { Check, Trash2, ShieldAlert } from "lucide-react";
+import { Check, Trash2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthContext } from "@/components/AuthProvider";
 
 interface UserInfoModalProps {
   userId: string | null;
@@ -22,6 +23,7 @@ export function UserInfoModal({
   onUserDeleted,
   onUserSuspended,
 }: UserInfoModalProps) {
+  const { user: currentUser } = useAuthContext();
   const [user, setUser] = useState<AdminUserDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +65,15 @@ export function UserInfoModal({
     };
   }, [isOpen, userId]);
 
+  const isSelf = !!(
+    currentUser &&
+    user &&
+    (currentUser.id === user.id ||
+      currentUser.email.toLowerCase() === user.email.toLowerCase())
+  );
+
   const handleSuspendToggle = async () => {
-    if (!user || !userId) return;
+    if (!user || !userId || isSelf) return;
     try {
       if (user.isSuspended) {
         await apiClient.put(`/api/v1/admin/users/${userId}/unsuspend`);
@@ -82,7 +91,7 @@ export function UserInfoModal({
   };
 
   const handleDeleteUser = async () => {
-    if (!user || !userId) return;
+    if (!user || !userId || isSelf) return;
     setIsDeleting(true);
     try {
       await apiClient.delete(`/api/v1/admin/users/${userId}`);
@@ -168,7 +177,7 @@ export function UserInfoModal({
                       <span className="text-xs font-medium text-zinc-400">Verified</span>
                       {user.isVerified ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
-                          <Check className="w-3.5 h-3.5" />
+                          <ShieldCheck className="w-3.5 h-3.5" />
                           Verified
                         </span>
                       ) : (
@@ -199,26 +208,28 @@ export function UserInfoModal({
                 )}
               </div>
 
-              <div className="flex gap-3.5 pt-4 border-t border-white/10 mt-auto">
-                <button
-                  onClick={handleSuspendToggle}
-                  disabled={isLoading || !user}
-                  className={`flex-1 py-3 rounded-xl text-xs font-semibold transition-all border ${
-                    user?.isSuspended
-                      ? "bg-transparent text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10"
-                      : "bg-transparent text-amber-400 border-amber-500/40 hover:bg-amber-500/10"
-                  }`}
-                >
-                  {user?.isSuspended ? "Unsuspend" : "Suspend"}
-                </button>
-                <button
-                  onClick={() => setStep("deleteConfirm")}
-                  disabled={isLoading || !user}
-                  className="flex-1 py-3 rounded-xl text-xs font-semibold bg-transparent text-rose-400 border border-rose-500/40 hover:bg-rose-500/10 transition-all"
-                >
-                  Delete User
-                </button>
-              </div>
+              {!isSelf && (
+                <div className="flex gap-3.5 pt-4 border-t border-white/10 mt-auto">
+                  <button
+                    onClick={handleSuspendToggle}
+                    disabled={isLoading || !user}
+                    className={`flex-1 py-3 rounded-xl text-xs font-semibold transition-all border ${
+                      user?.isSuspended
+                        ? "bg-transparent text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10"
+                        : "bg-transparent text-amber-400 border-amber-500/40 hover:bg-amber-500/10"
+                    }`}
+                  >
+                    {user?.isSuspended ? "Unsuspend" : "Suspend"}
+                  </button>
+                  <button
+                    onClick={() => setStep("deleteConfirm")}
+                    disabled={isLoading || !user}
+                    className="flex-1 py-3 rounded-xl text-xs font-semibold bg-transparent text-rose-400 border border-rose-500/40 hover:bg-rose-500/10 transition-all"
+                  >
+                    Delete User
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
 

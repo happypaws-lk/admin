@@ -5,6 +5,7 @@ import Link from "next/link";
 import { apiClient, ApiError } from "@/lib/api";
 import type { AdminUserDetailResponse } from "@/lib/types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuthContext } from "@/components/AuthProvider";
 
 export default function UserDetailPage({
   params,
@@ -12,6 +13,7 @@ export default function UserDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { user: currentUser } = useAuthContext();
 
   const [user, setUser] = useState<AdminUserDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,8 +79,15 @@ export default function UserDetailPage({
     }
   };
 
+  const isSelf = !!(
+    currentUser &&
+    user &&
+    (currentUser.id === user.id ||
+      currentUser.email.toLowerCase() === user.email.toLowerCase())
+  );
+
   const handleSuspendToggle = async (reason: string | undefined) => {
-    if (!user) return;
+    if (!user || isSelf) return;
     if (user.isSuspended) {
       await apiClient.put(`/api/v1/admin/users/${id}/unsuspend`);
     } else {
@@ -120,16 +129,18 @@ export default function UserDetailPage({
           </Link>
           <h1 className="text-xl font-bold text-white mt-1">{user.email}</h1>
         </div>
-        <button
-          onClick={() => setSuspendDialog(true)}
-          className={`text-xs px-4 py-2 rounded-xl font-semibold transition-colors ${
-            user.isSuspended
-              ? "bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30"
-              : "bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/30"
-          }`}
-        >
-          {user.isSuspended ? "Unsuspend User" : "Suspend User"}
-        </button>
+        {!isSelf && (
+          <button
+            onClick={() => setSuspendDialog(true)}
+            className={`text-xs px-4 py-2 rounded-xl font-semibold transition-colors ${
+              user.isSuspended
+                ? "bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30"
+                : "bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/30"
+            }`}
+          >
+            {user.isSuspended ? "Unsuspend User" : "Suspend User"}
+          </button>
+        )}
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] divide-y divide-white/5">

@@ -1,20 +1,37 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
 import type { KycPendingResponse } from "@/lib/types";
 import { DataTable, type Column } from "@/components/DataTable";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserInfoModal } from "../users/_components/UserInfoModal";
+import { KycManageModal } from "./_components/KycManageModal";
+
+const getInitials = (name: string) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase())
+    .slice(0, 2)
+    .join("");
+
+const getRelativeDate = (dateStr: string): string => {
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return `${Math.floor(days / 30)}mo ago`;
+};
 
 export default function KycPage() {
   const [items, setItems] = useState<KycPendingResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [approveTarget, setApproveTarget] = useState<KycPendingResponse | null>(null);
-  const [rejectTarget, setRejectTarget] = useState<KycPendingResponse | null>(null);
-  const [actionPending, setActionPending] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [manageSubmission, setManageSubmission] = useState<KycPendingResponse | null>(null);
 
   const fetchKyc = useCallback(async () => {
     setIsLoading(true);
@@ -33,98 +50,61 @@ export default function KycPage() {
     fetchKyc();
   }, [fetchKyc]);
 
-  const handleApprove = async () => {
-    if (!approveTarget) return;
-    setActionPending(true);
-    try {
-      await apiClient.post(`/api/v1/admin/kyc/${approveTarget.id}/approve`);
-      setApproveTarget(null);
-      fetchKyc();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to approve KYC.");
-    } finally {
-      setActionPending(false);
-    }
-  };
-
-  const handleReject = async (reason: string | undefined) => {
-    if (!rejectTarget) return;
-    setActionPending(true);
-    try {
-      await apiClient.post(`/api/v1/admin/kyc/${rejectTarget.id}/reject`, {
-        reason: reason ?? "",
-      });
-      setRejectTarget(null);
-      fetchKyc();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to reject KYC.");
-    } finally {
-      setActionPending(false);
-    }
-  };
-
   const columns: Column<KycPendingResponse>[] = [
     {
       key: "userName",
       header: "User",
       render: (row) => (
-        <div className="space-y-0.5">
-          <span className="text-slate-200 font-medium text-sm">{row.userName}</span>
-          <p className="text-xs text-slate-500">{row.userEmail}</p>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300 font-semibold text-xs shrink-0">
+            {getInitials(row.userName)}
+          </div>
+          <div className="min-w-0">
+            <p className="font-medium text-sm text-zinc-100 truncate">{row.userName}</p>
+            <p className="text-xs text-zinc-500 truncate">{row.userEmail}</p>
+          </div>
         </div>
       ),
     },
     {
       key: "documentType",
       header: "Document",
+      width: "140px",
       render: (row) => <StatusBadge variant="documentType" value={row.documentType} />,
-      width: "150px",
-    },
-    {
-      key: "documentUrl",
-      header: "File",
-      render: (row) => (
-        <a
-          href={row.documentUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-[#818cf8] hover:text-indigo-300 underline transition-colors"
-        >
-          View ↗
-        </a>
-      ),
-      width: "80px",
     },
     {
       key: "uploadedAt",
       header: "Submitted",
+      width: "130px",
       render: (row) => (
-        <span className="text-slate-400 text-xs">
-          {new Date(row.uploadedAt).toLocaleDateString()}
-        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-zinc-400 text-xs cursor-default">
+                {getRelativeDate(row.uploadedAt)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>{new Date(row.uploadedAt).toLocaleString()}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ),
-      width: "110px",
     },
     {
       key: "actions",
       header: "",
+      width: "100px",
       render: (row) => (
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
           <button
-            onClick={() => setApproveTarget(row)}
-            className="text-xs px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20 transition-colors font-medium"
+            onClick={() => setManageSubmission(row)}
+            className="apple-press-feedback px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.06] text-zinc-300 border border-white/10 hover:bg-white/[0.12] hover:text-white transition-all"
           >
-            Approve
-          </button>
-          <button
-            onClick={() => setRejectTarget(row)}
-            className="text-xs px-3 py-1 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 border border-rose-500/20 transition-colors font-medium"
-          >
-            Reject
+            Manage
           </button>
         </div>
       ),
-      width: "160px",
     },
   ];
 
@@ -132,7 +112,9 @@ export default function KycPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-white">KYC Review</h1>
-        <p className="text-slate-400 mt-1 text-sm">Review and process identity verification documents</p>
+        <p className="text-slate-400 mt-1 text-sm">
+          Review and process identity verification documents
+        </p>
       </div>
 
       {error && (
@@ -147,27 +129,25 @@ export default function KycPage() {
         isLoading={isLoading}
         keyExtractor={(row) => row.id}
         emptyMessage="No pending KYC submissions."
+        onRowClick={(row) => setProfileUserId(row.userId)}
       />
 
-      <ConfirmDialog
-        isOpen={!!approveTarget}
-        title={`Approve KYC for ${approveTarget?.userName ?? approveTarget?.userEmail}?`}
-        description="This will mark the document as verified and grant the user the privileges associated with their role."
-        confirmLabel={actionPending ? "Approving…" : "Approve"}
-        onConfirm={handleApprove}
-        onCancel={() => setApproveTarget(null)}
+      <UserInfoModal
+        userId={profileUserId}
+        isOpen={!!profileUserId}
+        onClose={() => setProfileUserId(null)}
+        onUserDeleted={() => {
+          setProfileUserId(null);
+          fetchKyc();
+        }}
+        onUserSuspended={() => {}}
       />
 
-      <ConfirmDialog
-        isOpen={!!rejectTarget}
-        title={`Reject KYC for ${rejectTarget?.userName ?? rejectTarget?.userEmail}?`}
-        description="The user will be notified and asked to resubmit with a valid document."
-        destructive
-        confirmLabel={actionPending ? "Rejecting…" : "Reject"}
-        requireReason
-        reasonLabel="Rejection reason"
-        onConfirm={handleReject}
-        onCancel={() => setRejectTarget(null)}
+      <KycManageModal
+        submission={manageSubmission}
+        isOpen={!!manageSubmission}
+        onClose={() => setManageSubmission(null)}
+        onActionComplete={fetchKyc}
       />
     </div>
   );
